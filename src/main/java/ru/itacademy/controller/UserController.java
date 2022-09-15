@@ -15,13 +15,20 @@ public class UserController {
     private final Scanner in = new Scanner(System.in);
 
     void logApp() {
+
     }
 
     void registerUser() {
         System.out.println(Constants.CREATING_LOGIN);
         String login = inputLogin();
+        if (login.equals("0")) {
+            return;
+        }
         System.out.println(Constants.CREATING_PASSWORD);
         String password = inputPassword();
+        if (password.equals("0")) {
+            return;
+        }
         if (userService.createUser(login, password)) {
             System.out.println(Constants.REGISTRATION_SUCCESSFUL);
         } else {
@@ -33,6 +40,9 @@ public class UserController {
         String login;
         while (true) {
             login = in.nextLine();
+            if (login.equals("0")) {
+                return "0";
+            }
             try {
                 if (userService.checkDataCorrectness(login)) {
                     System.out.println(Constants.INCORRECT_LOGIN);
@@ -51,6 +61,9 @@ public class UserController {
         String password;
         while (true) {
             password = in.nextLine();
+            if (password.equals("0")) {
+                return "0";
+            }
             if (userService.checkDataCorrectness(password)) {
                 System.out.println(Constants.INCORRECT_PASSWORD);
             } else {
