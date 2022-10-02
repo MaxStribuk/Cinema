@@ -1,4 +1,4 @@
-package ru.itacademy.util;
+package ru.itacademy.util.Exceptions;
 
 public class InvalidUserException extends RuntimeException {
 

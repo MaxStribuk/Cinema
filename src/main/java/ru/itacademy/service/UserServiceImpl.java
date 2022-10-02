@@ -1,22 +1,19 @@
 package ru.itacademy.service;
 
+import ru.itacademy.controller.Menu;
 import ru.itacademy.model.User;
 import ru.itacademy.repository.UserRepository;
-import ru.itacademy.util.InvalidUserException;
+import ru.itacademy.util.Constants;
+import ru.itacademy.util.Exceptions.InvalidUserException;
 
 import java.sql.SQLException;
 
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository = new UserRepository();
+    private User user;
 
-//    @Override
-//    public User getUser(String login) {
-//        return new User();
-//    }
-
-    @Override
-    public boolean checkLoginAvailability(String login) throws SQLException {
+    private boolean checkLoginAvailability(String login) throws SQLException {
         return userRepository.checkLoginAvailability(login);
     }
 
@@ -30,8 +27,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.create(login, password);
     }
 
-    @Override
-    public User getUser(String login, String password) throws SQLException, InvalidUserException {
+    private User getUser(String login, String password) throws SQLException, InvalidUserException {
         return userRepository.getUser(login, password);
     }
 
@@ -41,10 +37,86 @@ public class UserServiceImpl implements UserService {
             return 0;
         } else
             switch (user.getRole()) {
-                case "user" -> {return 1;}
-                case "manager" -> {return 2;}
-                case "admin" -> {return 3;}
-                default -> {return 0;}
+                case "user" -> {
+                    return 1;
+                }
+                case "manager" -> {
+                    return 2;
+                }
+                case "admin" -> {
+                    return 3;
+                }
+                default -> {
+                    return 0;
+                }
             }
+    }
+
+    @Override
+    public boolean deleteAccount(User user) {
+        return userRepository.deleteAccount(user);
+    }
+
+    @Override
+    public boolean checkUserAvailability(String login, String password) {
+        try {
+            if (checkDataCorrectness(login)
+                    && checkDataCorrectness(password)) {
+                user = getUser(login, password);
+                return true;
+            } else {
+                System.out.println(Constants.FAILED_AUTHORIZATION);
+                return false;
+            }
+        } catch (SQLException e) {
+            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+            return false;
+        } catch (InvalidUserException e) {
+            System.out.println(Constants.INVALID_USER);
+            return false;
+        }
+    }
+
+    @Override
+    public String inputLogin() {
+        String login;
+        while (true) {
+            login = Menu.in.nextLine();
+            if (login.equals("0")) {
+                return "0";
+            }
+            try {
+                if (!checkDataCorrectness(login)) {
+                    System.out.println(Constants.INCORRECT_LOGIN);
+                } else if (!checkLoginAvailability(login)) {
+                    System.out.println(Constants.LOGIN_IS_BUSY);
+                } else {
+                    return login;
+                }
+            } catch (SQLException e) {
+                System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+            }
+        }
+    }
+
+    @Override
+    public String inputPassword() {
+        String password;
+        while (true) {
+            password = Menu.in.nextLine();
+            if (password.equals("0")) {
+                return "0";
+            }
+            if (!checkDataCorrectness(password)) {
+                System.out.println(Constants.INCORRECT_PASSWORD);
+            } else {
+                return password;
+            }
+        }
+    }
+
+    @Override
+    public User getUser() {
+        return user;
     }
 }

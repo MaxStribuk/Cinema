@@ -6,7 +6,7 @@ import java.util.Scanner;
 
 public class Menu {
 
-    private final Scanner in = new Scanner(System.in);
+    public static final Scanner in = new Scanner(System.in);
     private final UserController userController = new UserController();
 
     public void start() {
