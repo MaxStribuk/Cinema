@@ -23,7 +23,7 @@ public class SessionRepository {
             stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
             ResultSet sessions = stmt.executeQuery();
             if (!sessions.first()) {
-                System.out.println(Constants.SESSIONS_MISSING);
+                System.out.println(Constants.MISSING_SESSIONS);
             } else {
                 sessions.beforeFirst();
                 while (sessions.next()) {

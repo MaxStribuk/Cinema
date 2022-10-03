@@ -19,9 +19,9 @@ public class MovieController {
         System.out.println(Constants.CREATING_MOVIE_DURATION);
         LocalTime duration = movieService.inputDuration();
         if (movieService.createMovie(title, duration)) {
-            System.out.println(Constants.CREATE_MOVIE_SUCCESSFUL);
+            System.out.println(Constants.SUCCESSFUL_CREATE_MOVIE);
         } else {
-            System.out.println(Constants.CREATE_MOVIE_FAILED);
+            System.out.println(Constants.FAILED_CREATE_MOVIE);
         }
     }
 

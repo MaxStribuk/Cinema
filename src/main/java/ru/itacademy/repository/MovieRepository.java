@@ -19,7 +19,7 @@ public class MovieRepository {
                     "SELECT * FROM movie");
             ResultSet movies = stmt.executeQuery();
             if (!movies.first()) {
-                System.out.println(Constants.MOVIES_MISSING);
+                System.out.println(Constants.MISSING_MOVIES);
             } else {
                 movies.beforeFirst();
                 while (movies.next()) {

@@ -65,7 +65,7 @@ public class UserServiceImpl implements UserService {
                 user = getUser(login, password);
                 return true;
             } else {
-                System.out.println(Constants.FAILED_AUTHORIZATION);
+                System.out.println(Constants.FAILED_AUTHORIZATION_USER);
                 return false;
             }
         } catch (SQLException e) {
@@ -87,7 +87,7 @@ public class UserServiceImpl implements UserService {
             }
             try {
                 if (!checkDataCorrectness(login)) {
-                    System.out.println(Constants.INCORRECT_LOGIN);
+                    System.out.println(Constants.INVALID_USER_LOGIN);
                 } else if (!checkLoginAvailability(login)) {
                     System.out.println(Constants.LOGIN_IS_BUSY);
                 } else {
@@ -108,7 +108,7 @@ public class UserServiceImpl implements UserService {
                 return "0";
             }
             if (!checkDataCorrectness(password)) {
-                System.out.println(Constants.INCORRECT_PASSWORD);
+                System.out.println(Constants.INVALID_USER_PASSWORD);
             } else {
                 return password;
             }

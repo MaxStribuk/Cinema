@@ -42,7 +42,7 @@ public class TicketRepository {
             stmt.setInt(1, sessionID);
             ResultSet tickets = stmt.executeQuery();
             if (!tickets.first()) {
-                System.out.println(Constants.TICKETS_MISSING);
+                System.out.println(Constants.MISSING_TICKETS);
             } else {
                 tickets.beforeFirst();
                 while (tickets.next()) {
@@ -75,7 +75,7 @@ public class TicketRepository {
             stmt.setInt(1, movieID);
             ResultSet tickets = stmt.executeQuery();
             if (!tickets.first()) {
-                System.out.println(Constants.TICKETS_MISSING);
+                System.out.println(Constants.MISSING_TICKETS);
             } else {
                 tickets.beforeFirst();
                 while (tickets.next()) {
@@ -110,18 +110,23 @@ public class TicketRepository {
     public void buyTicket(int ticketID, int userID) {
         try (Connection connection = ConnectionManager.open()) {
             PreparedStatement stmt = connection.prepareStatement(
-                    "UPDATE ticket SET user_id = ? WHERE ticket_id = ?");
+                    "UPDATE ticket SET user_id = ? " +
+                            "WHERE ticket_id = ? " +
+                            "AND user_id IS NULL");
             stmt.setInt(1, userID);
             stmt.setInt(2, ticketID);
-            stmt.execute();
-            stmt = connection.prepareStatement(
-                    "SELECT cost FROM ticket WHERE ticket_id = ?");
-            stmt.setInt(1, ticketID);
-            ResultSet ticket = stmt.executeQuery();
-            ticket.first();
-            System.out.println(Constants.BUY_TICKET_SUCCESS +
-                    ticket.getInt(1) +
-                    " рублей.");
+            if (!stmt.execute() && stmt.getUpdateCount() == 1) {
+                stmt = connection.prepareStatement(
+                        "SELECT cost FROM ticket WHERE ticket_id = ?");
+                stmt.setInt(1, ticketID);
+                ResultSet ticket = stmt.executeQuery();
+                ticket.first();
+                System.out.println(Constants.SUCCESSFUL_BUY_TICKET +
+                        ticket.getInt(1) +
+                        Constants.CURRENCY);
+            } else {
+                System.out.println(Constants.FAILED_BUY_TICKET);
+            }
         } catch (SQLException e) {
             System.out.println(Constants.FAILED_CONNECTION_DATABASE);
         }
@@ -139,7 +144,7 @@ public class TicketRepository {
             stmt.setInt(1, userID);
             ResultSet tickets = stmt.executeQuery();
             if (!tickets.first()) {
-                System.out.println(Constants.TICKET_MISSING);
+                System.out.println(Constants.MISSING_USER_TICKETS);
             } else {
                 tickets.beforeFirst();
                 while (tickets.next()) {
@@ -174,11 +179,11 @@ public class TicketRepository {
                     stmt.setInt(1, ticketID);
                     ResultSet ticket = stmt.executeQuery();
                     ticket.first();
-                    System.out.println(Constants.RETURN_TICKET_SUCCESS +
+                    System.out.println(Constants.SUCCESSFUL_RETURN_TICKET +
                             ticket.getInt(1) +
-                            " рублей.");
+                            Constants.CURRENCY);
                 } else {
-                    System.out.println(Constants.RETURN_TICKET_FAILED);
+                    System.out.println(Constants.FAILED_RETURN_TICKET);
                 }
             }
         } catch (SQLException e) {

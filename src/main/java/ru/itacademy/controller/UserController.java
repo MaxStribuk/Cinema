@@ -45,11 +45,46 @@ public class UserController {
     }
 
     private void printManagerMenu() {
+        while (true) {
+            System.out.print(Constants.MENU_USER);
+            System.out.println(Constants.MENU_MANAGER);
+            String input = Menu.in.nextLine();
+            switch (input) {
+                case "1" -> {
+                    sessionController.printAllSessions();
+                    ticketController.printTicketMenuWithSessionID();
+                }
+                case "2" -> {
+                    movieController.printAllMovies();
+                    ticketController.printTicketMenuWithMovieID();
+                }
+                case "3" -> ticketController.buyTicket(userService.getUser().getID());
+                case "4" -> ticketController.printUserTickets(userService.getUser().getID());
+                case "5" -> ticketController.returnTicket(userService.getUser().getID());
+                case "6" -> {
+                    return;
+                }
+                case "7" -> {
+                    if (userService.deleteAccount(userService.getUser())) {
+                        System.out.println(Constants.USER_DELETED);
+                        return;
+                    }
+                }
+                case "8" -> {}
+                case "9" -> {}
+                case "10" -> {}
+                case "0" -> {
+                    System.out.println(Constants.FAREWELL);
+                    System.exit(0);
+                }
+                default -> System.out.println(Constants.INVALID_INPUT);
+            }
+        }
     }
 
     private void printUserMenu() {
         while (true) {
-            System.out.println(Constants.USER_MENU);
+            System.out.println(Constants.MENU_USER);
             String input = Menu.in.nextLine();
             switch (input) {
                 case "1" -> {
@@ -76,26 +111,26 @@ public class UserController {
                     System.out.println(Constants.FAREWELL);
                     System.exit(0);
                 }
-                default -> System.out.println(Constants.INCORRECT_INPUT);
+                default -> System.out.println(Constants.INVALID_INPUT);
             }
         }
     }
 
     public void registerUser() {
-        System.out.println(Constants.CREATING_LOGIN);
+        System.out.println(Constants.CREATING_USER_LOGIN);
         String login = userService.inputLogin();
         if (login.equals("0")) {
             return;
         }
-        System.out.println(Constants.CREATING_PASSWORD);
+        System.out.println(Constants.CREATING_USER_PASSWORD);
         String password = userService.inputPassword();
         if (password.equals("0")) {
             return;
         }
         if (userService.createUser(login, password)) {
-            System.out.println(Constants.REGISTRATION_SUCCESSFUL);
+            System.out.println(Constants.SUCCESSFUL_REGISTRATION_USER);
         } else {
-            System.out.println(Constants.REGISTRATION_FAILED);
+            System.out.println(Constants.FAILED_REGISTRATION_USER);
         }
     }
 }

@@ -24,7 +24,7 @@ public class TicketController {
     public void printTicketMenuWithSessionID() {
         while (true) {
             try {
-                System.out.println(Constants.SESSION_MENU);
+                System.out.println(Constants.MENU_SESSION);
                 int sessionID = Integer.parseInt(Menu.in.nextLine());
                 if (sessionID == 0) {
                     return;
@@ -36,7 +36,7 @@ public class TicketController {
                     throw new NumberFormatException();
                 }
             } catch (NumberFormatException e) {
-                System.out.println(Constants.INCORRECT_SESSION_ID);
+                System.out.println(Constants.INVALID_SESSION_ID);
             } catch (SQLException e) {
                 System.out.println(Constants.FAILED_CONNECTION_DATABASE);
             }
@@ -44,7 +44,7 @@ public class TicketController {
     }
 
     public void printTicketMenuWithMovieID() {
-        System.out.println(Constants.MOVIE_MENU);
+        System.out.println(Constants.MENU_MOVIE);
         while (true) {
             try {
                 int movieID = Integer.parseInt(Menu.in.nextLine());
@@ -58,14 +58,14 @@ public class TicketController {
                     throw new NumberFormatException();
                 }
             } catch (NumberFormatException e) {
-                System.out.println(Constants.INCORRECT_MOVIE_ID);
+                System.out.println(Constants.INVALID_MOVIE_ID);
             }
         }
     }
 
     public void buyTicket(int userID) {
-        System.out.println(Constants.TICKET_MENU_BUY);
         while (true) {
+            System.out.println(Constants.MENU_TICKET_BUY);
             try {
                 int ticketID = Integer.parseInt(Menu.in.nextLine());
                 if (ticketID == 0) {
@@ -78,7 +78,7 @@ public class TicketController {
                     throw new NumberFormatException();
                 }
             } catch (NumberFormatException e) {
-                System.out.println(Constants.INCORRECT_TICKET_ID);
+                System.out.println(Constants.INVALID_TICKET_ID);
             }
         }
     }
@@ -89,7 +89,7 @@ public class TicketController {
 
     public void returnTicket(int userID) {
         while (true) {
-            System.out.println(Constants.TICKET_MENU_RETURN);
+            System.out.println(Constants.MENU_TICKET_RETURN);
             try {
                 int ticketID = Integer.parseInt(Menu.in.nextLine());
                 if (ticketID == 0) {
@@ -102,7 +102,7 @@ public class TicketController {
                     throw new NumberFormatException();
                 }
             } catch (NumberFormatException e) {
-                System.out.println(Constants.INCORRECT_TICKET_ID);
+                System.out.println(Constants.INVALID_TICKET_ID);
             }
         }
     }

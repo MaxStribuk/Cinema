@@ -20,10 +20,10 @@ public class SessionController {
         System.out.println(Constants.CREATING_MOVIE_START_TIME);
         Timestamp startTime = sessionService.inputStartTime();
         if (sessionService.createSession(movieID, startTime)) {
-            System.out.println(Constants.CREATE_SESSION_SUCCESSFUL);
+            System.out.println(Constants.SUCCESSFUL_CREATE_SESSION);
             ticketController.createTicketsForSession(startTime);
         } else {
-            System.out.println(Constants.CREATE_SESSION_FAILED);
+            System.out.println(Constants.FAILED_CREATE_SESSION);
         }
     }
 

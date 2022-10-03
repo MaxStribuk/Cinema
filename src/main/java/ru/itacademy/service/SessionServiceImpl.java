@@ -7,6 +7,7 @@ import ru.itacademy.util.Constants;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -38,10 +39,10 @@ public class SessionServiceImpl implements SessionService {
                 if (checkMovieIDAvailability(id)) {
                     return id;
                 } else {
-                    System.out.println(Constants.INVALID_MOVIE);
+                    System.out.println(Constants.INVALID_MOVIE_ID);
                 }
             } catch (NumberFormatException e) {
-                System.out.println(Constants.INCORRECT_MOVIE_ID);
+                System.out.println(Constants.INVALID_MOVIE_ID);
             }
         }
     }
@@ -56,10 +57,10 @@ public class SessionServiceImpl implements SessionService {
                 if (checkSessionStartTimeCorrectness(startTime)) {
                     return Timestamp.valueOf(startTime);
                 } else {
-                    System.out.println(Constants.INVALID_START_TIME);
+                    throw new DateTimeException("");
                 }
             } catch (DateTimeParseException e) {
-                System.out.println(Constants.INCORRECT_MOVIE_START_TIME);
+                System.out.println(Constants.INVALID_SESSION_START_TIME);
                 System.out.println(Constants.CREATING_MOVIE_START_TIME);
             }
         }

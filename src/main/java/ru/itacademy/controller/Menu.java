@@ -16,7 +16,7 @@ public class Menu {
 
     private void printMenu() {
         while (true) {
-            System.out.println(Constants.MAIN_MENU);
+            System.out.println(Constants.MENU_MAIN);
             String input = in.nextLine();
             switch (input) {
                 case "1" -> userController.logApp();
@@ -25,7 +25,7 @@ public class Menu {
                     System.out.println(Constants.FAREWELL);
                     return;
                 }
-                default -> System.out.println(Constants.INCORRECT_INPUT);
+                default -> System.out.println(Constants.INVALID_INPUT);
             }
         }
     }

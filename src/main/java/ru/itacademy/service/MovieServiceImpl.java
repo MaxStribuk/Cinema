@@ -34,7 +34,7 @@ public class MovieServiceImpl implements MovieService {
             if (title.length() > 0 && title.length() <= 100) {
                 return title;
             } else {
-                System.out.println(Constants.INCORRECT_TITLE);
+                System.out.println(Constants.INVALID_MOVIE_TITLE);
             }
         }
     }
@@ -43,9 +43,9 @@ public class MovieServiceImpl implements MovieService {
     public LocalTime inputDuration() {
         while (true) {
             try {
-                System.out.println(Constants.INPUT_HOURS);
+                System.out.println(Constants.CREATING_MOVIE_DURATION_HOURS);
                 int hours = Integer.parseInt(Menu.in.nextLine());
-                System.out.println(Constants.INPUT_MINUTES);
+                System.out.println(Constants.CREATING_MOVIE_DURATION_MINUTES);
                 int minutes = Integer.parseInt(Menu.in.nextLine());
                 LocalTime duration = LocalTime.of(hours, minutes);
                 if (!checkCorrectDuration(hours, minutes)) {
@@ -53,7 +53,7 @@ public class MovieServiceImpl implements MovieService {
                 }
                 return duration;
             } catch (NumberFormatException | DateTimeException e) {
-                System.out.println(Constants.INCORRECT_DURATION);
+                System.out.println(Constants.INVALID_MOVIE_DURATION);
             }
         }
     }
