@@ -136,3 +136,5 @@ replay_pid*
 .idea/vcs.xml
 # Project exclude paths
 /.gradle/
+
+build/
