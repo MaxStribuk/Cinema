@@ -1,7 +1,9 @@
 package ru.itacademy.service;
 
 import ru.itacademy.controller.Menu;
+import ru.itacademy.model.Session;
 import ru.itacademy.repository.SessionRepository;
+import ru.itacademy.util.ConnectionManager;
 import ru.itacademy.util.Constants;
 
 import java.sql.SQLException;
@@ -11,22 +13,24 @@ import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 public class SessionServiceImpl implements SessionService {
 
     private final SessionRepository sessionRepository = new SessionRepository();
+    public static SessionServiceImpl sessionService = new SessionServiceImpl();
     private final MovieService movieService = new MovieServiceImpl();
 
     @Override
     public void printAllSessions() {
-        sessionRepository.printAllSessions();
+        sessionRepository.printSessions();
     }
 
     @Override
-    public int inputID() {
+    public int inputMovieID() {
         int id;
+        System.out.println(Constants.CREATING_MOVIE_ID);
         while (true) {
             try {
                 id = Integer.parseInt(Menu.in.nextLine());
@@ -52,6 +56,7 @@ public class SessionServiceImpl implements SessionService {
         LocalDateTime startTime;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy MM dd HH mm");
         while (true) {
+            System.out.println(Constants.CREATING_SESSION_START_TIME);
             try {
                 startTime = LocalDateTime.parse(Menu.in.nextLine(), formatter);
                 if (checkSessionStartTimeCorrectness(startTime)) {
@@ -59,9 +64,8 @@ public class SessionServiceImpl implements SessionService {
                 } else {
                     throw new DateTimeException("");
                 }
-            } catch (DateTimeParseException e) {
+            } catch (DateTimeException e) {
                 System.out.println(Constants.INVALID_SESSION_START_TIME);
-                System.out.println(Constants.CREATING_MOVIE_START_TIME);
             }
         }
     }
@@ -89,7 +93,51 @@ public class SessionServiceImpl implements SessionService {
         if (sessionID < 0) {
             return false;
         } else {
-            return sessionRepository.checkSessionIDCorrectness(sessionID);
+            return sessionRepository.checkAvailabilitySession(sessionID);
+        }
+    }
+
+    @Override
+    public void updateStartTime(int sessionID) throws SQLException {
+        System.out.println(Constants.CREATING_SESSION_START_TIME);
+        Timestamp startTime = inputStartTime();
+        int movieID = sessionRepository.getMovieID(sessionID);
+        updateSession(sessionID, startTime, movieID);
+    }
+
+    @Override
+    public void updateMovieID(int sessionID) throws SQLException {
+        Timestamp startTime = sessionRepository.getStartTime(sessionID);
+        int movieID = inputMovieID();
+        updateSession(sessionID, startTime, movieID);
+    }
+
+    @Override
+    public boolean updateSessions(int movieID, Time duration) throws SQLException {
+        List <Session> sessions = sessionRepository.getSessions(movieID);
+        for (Session session : sessions) {
+            Timestamp endTime = calculateEndTime(session.getStartTime(), duration);
+            if (endTime.after(session.getEndTime())) {
+                if (sessionRepository.checkAvailabilitySession(ConnectionManager.open(),
+                        session.getID(), session.getStartTime(), endTime)) {
+                    session.setEndTime(endTime);
+                } else {
+                    return false;
+                }
+            } else {
+                session.setEndTime(endTime);
+            }
+        }
+        return sessionRepository.updateSessions(sessions);
+    }
+
+    private void updateSession(int sessionID, Timestamp startTime, int movieID) throws SQLException {
+        Time duration = movieService.getDuration(movieID);
+        Timestamp endTime = calculateEndTime(startTime, duration);
+        if (sessionRepository.updateSession(sessionID, startTime, endTime)) {
+            System.out.println(Constants.SUCCESSFUL_CREATE_SESSION);
+        } else {
+            System.out.println(Constants.SESSIONS_IS_BUSY);
         }
     }
 

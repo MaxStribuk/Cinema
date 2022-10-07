@@ -42,7 +42,7 @@ public class TicketServiceImpl implements TicketService {
         if (ticketID < 0) {
             return false;
         } else {
-            return ticketRepository.checkTicketAvailability(ticketID);
+            return ticketRepository.checkAvailabilityTicket(ticketID);
         }
     }
 
@@ -52,8 +52,8 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public void printUserTickets(int userID) {
-        ticketRepository.printUserTickets(userID);
+    public boolean printUserTickets(int userID) {
+        return ticketRepository.printUserTickets(userID);
     }
 
     @Override

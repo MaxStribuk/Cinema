@@ -13,7 +13,7 @@ public interface TicketService {
 
     void buyTicket(int ticketID, int userID);
 
-    void printUserTickets(int userID);
+    boolean printUserTickets(int userID);
 
     void returnTicket(int ticketID, int userID);
 }

@@ -6,6 +6,8 @@ import ru.itacademy.service.SessionService;
 import ru.itacademy.service.SessionServiceImpl;
 import ru.itacademy.service.TicketService;
 import ru.itacademy.service.TicketServiceImpl;
+import ru.itacademy.service.UserService;
+import ru.itacademy.service.UserServiceImpl;
 import ru.itacademy.util.Constants;
 
 import java.sql.SQLException;
@@ -16,6 +18,7 @@ public class TicketController {
     TicketService ticketService = new TicketServiceImpl();
     SessionService sessionService = new SessionServiceImpl();
     MovieService movieService = new MovieServiceImpl();
+    UserService userService = new UserServiceImpl();
 
     public void createTicketsForSession(Timestamp startTime) {
         ticketService.createTicketsForSession(startTime);
@@ -103,6 +106,31 @@ public class TicketController {
                 }
             } catch (NumberFormatException e) {
                 System.out.println(Constants.INVALID_TICKET_ID);
+            }
+        }
+    }
+
+    public void buyUserTicket() {
+        while (true) {
+            System.out.println(Constants.MENU_TICKET_USER_BUY);
+            try {
+                int userID = Integer.parseInt(Menu.in.nextLine());
+                if (userID == 0) {
+                    return;
+                }
+                if (userService.checkUserAvailability(userID)) {
+                    if (ticketService.printUserTickets(userID)) {
+                        returnTicket(userID);
+                    }
+                    return;
+                } else {
+                    throw new NumberFormatException();
+                }
+            } catch (NumberFormatException e) {
+                System.out.println(Constants.INVALID_USER_ID);
+            } catch (SQLException e) {
+                System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+                return;
             }
         }
     }

@@ -14,7 +14,7 @@ public class UserServiceImpl implements UserService {
     private User user;
 
     private boolean checkLoginAvailability(String login) throws SQLException {
-        return userRepository.checkLoginAvailability(login);
+        return userRepository.checkAvailabilityLogin(login);
     }
 
     @Override
@@ -24,7 +24,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean createUser(String login, String password) {
-        return userRepository.create(login, password);
+        return userRepository.createUser(login, password);
+    }
+
+    @Override
+    public void printUsers() {
+        userRepository.printUsers();
+    }
+
+    @Override
+    public boolean checkUserAvailability(int userID) throws SQLException {
+        return userRepository.checkAvailabilityUser(userID);
     }
 
     private User getUser(String login, String password) throws SQLException, InvalidUserException {
@@ -54,7 +64,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean deleteAccount(User user) {
-        return userRepository.deleteAccount(user);
+        return userRepository.deleteUserAccount(user);
     }
 
     @Override

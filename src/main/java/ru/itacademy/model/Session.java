@@ -5,24 +5,32 @@ import java.util.Objects;
 
 public class Session {
 
-    private final int ID;
-    private final Timestamp start_time;
-    private final Timestamp end_time;
-    private final String title;
+    private final int id;
+    private final Timestamp startTime;
+    private Timestamp endTime;
+    private int movieID;
+    private String title;
 
-    public Session(int ID, Timestamp start_time, Timestamp end_time, String title) {
-        this.ID = ID;
-        this.start_time = start_time;
-        this.end_time = end_time;
+    public Session(int id, Timestamp startTime, Timestamp endTime, String title) {
+        this.id = id;
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.title = title;
+    }
+
+    public Session(int id, Timestamp startTime, Timestamp endTime, int movieID) {
+        this.id = id;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.movieID = movieID;
     }
 
     @Override
     public String toString() {
-        return "ID сеанса - " + ID +
+        return "ID сеанса - " + id +
                 ",\n\tфильм - " + title +
-                ",\n\tначало сеанса - " + start_time +
-                ",\n\tокончание сеанса - " + end_time;
+                ",\n\tначало сеанса - " + startTime +
+                ",\n\tокончание сеанса - " + endTime;
     }
 
     @Override
@@ -30,11 +38,27 @@ public class Session {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Session session = (Session) o;
-        return start_time.equals(session.start_time) && end_time.equals(session.end_time) && title.equals(session.title);
+        return startTime.equals(session.startTime) && endTime.equals(session.endTime) && title.equals(session.title);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(start_time, end_time, title);
+        return Objects.hash(startTime, endTime, title);
+    }
+
+    public Timestamp getStartTime() {
+        return startTime;
+    }
+
+    public void setEndTime(Timestamp endTime) {
+        this.endTime = endTime;
+    }
+
+    public Timestamp getEndTime() {
+        return endTime;
+    }
+
+    public int getID() {
+        return id;
     }
 }

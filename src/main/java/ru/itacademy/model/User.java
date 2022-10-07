@@ -32,9 +32,8 @@ public class User {
 
     @Override
     public String toString() {
-        return "Пользователь:" +
+        return "Пользователь " + login +
                 "\n\tID = " + ID +
-                ",\n\tlogin = " + login +
                 ",\n\trole = " + role +
                 ",\n\tstatus = " + status;
     }

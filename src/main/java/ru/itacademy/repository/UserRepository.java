@@ -12,18 +12,16 @@ import java.sql.SQLException;
 
 public class UserRepository {
 
-    public boolean checkLoginAvailability(String login) throws SQLException {
+    public boolean checkAvailabilityLogin(String login) throws SQLException {
         try (Connection connection = ConnectionManager.open()) {
             PreparedStatement stmt = connection.prepareStatement(
                     "SELECT * FROM user WHERE login = ?");
             stmt.setString(1, login);
             return !stmt.executeQuery().first();
-        } catch (SQLException e) {
-            throw new SQLException();
         }
     }
 
-    public boolean create(String login, String password) {
+    public boolean createUser(String login, String password) {
         try (Connection connection = ConnectionManager.open()) {
             PreparedStatement stmt = connection.prepareStatement(
                     "INSERT INTO user (login, password) VALUES (?, ?)");
@@ -43,20 +41,20 @@ public class UserRepository {
                     "SELECT * FROM user WHERE login = ? AND password = ?");
             stmt.setString(1, login);
             stmt.setString(2, password);
-            ResultSet set = stmt.executeQuery();
-            if (set.first()) {
-                return new User(set.getInt("user_id"),
-                        set.getString("login"),
-                        set.getString("password"),
-                        set.getString("role"),
-                        set.getString("status"));
+            ResultSet user = stmt.executeQuery();
+            if (user.first()) {
+                return new User(user.getInt("user_id"),
+                        user.getString("login"),
+                        user.getString("password"),
+                        user.getString("role"),
+                        user.getString("status"));
             } else {
                 throw new InvalidUserException();
             }
         }
     }
 
-    public boolean deleteAccount(User user) {
+    public boolean deleteUserAccount(User user) {
         try (Connection connection = ConnectionManager.open()) {
             PreparedStatement stmt = connection.prepareStatement(
                     "UPDATE user SET status = \"deleted\" WHERE user_id = ?");
@@ -66,6 +64,34 @@ public class UserRepository {
         } catch (SQLException e) {
             System.out.println(Constants.FAILED_CONNECTION_DATABASE);
             return false;
+        }
+    }
+
+    public void printUsers() {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "SELECT * FROM user");
+            ResultSet users = stmt.executeQuery();
+            while (users.next()) {
+                System.out.println(new User(
+                        users.getInt("user_id"),
+                        users.getString("login"),
+                        users.getString("password"),
+                        users.getString("role"),
+                        users.getString("status")
+                ));
+            }
+        } catch (SQLException e) {
+            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+        }
+    }
+
+    public boolean checkAvailabilityUser(int userID) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "SELECT * FROM user WHERE user_id = ?");
+            stmt.setInt(1, userID);
+            return stmt.executeQuery().first();
         }
     }
 }

@@ -12,31 +12,40 @@ import java.time.LocalTime;
 public class MovieServiceImpl implements MovieService {
 
     private final MovieRepository movieRepository = new MovieRepository();
+//    private final SessionService sessionService = new SessionServiceImpl();
 
     @Override
     public void printAllMovies() {
-        movieRepository.printAllMovies();
+        movieRepository.printMovies();
     }
 
     @Override
-    public boolean createMovie(String title, LocalTime duration) {
-        return movieRepository.createMovie(title, duration);
+    public boolean createMovie(String title, LocalTime duration) throws SQLException {
+        return movieRepository.createMovie(title, Time.valueOf(duration));
     }
 
     @Override
     public String inputTitle() {
         String title;
+        System.out.println(Constants.CREATING_MOVIE_TITLE);
         while (true) {
-            title = Menu.in.nextLine();
+            title = Menu.in.nextLine().trim();
             if (title.equals("0")) {
                 return "0";
             }
-            if (title.length() > 0 && title.length() <= 100) {
+            if (title.length() > 0
+                    && title.length() <= 100
+                    && checkCorrectTitle(title)) {
                 return title;
             } else {
                 System.out.println(Constants.INVALID_MOVIE_TITLE);
             }
         }
+    }
+
+    private boolean checkCorrectTitle(String title) {
+        return title.matches("[a-zA-Z0-9 !?,-]{1,100}")
+                && !title.matches("[ !?,-]{" + title.length() + "}");
     }
 
     @Override
@@ -60,12 +69,38 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     public boolean checkMovieAvailability(int id) {
-        return movieRepository.checkMovieAvailability(id);
+        return movieRepository.checkAvailabilityMovie(id);
     }
 
     @Override
     public Time getDuration(int movieID) throws SQLException {
         return movieRepository.getDuration(movieID);
+    }
+
+    @Override
+    public void updateTitle(int movieID) throws SQLException {
+        String title = inputTitle();
+        if (title.equals("0")) {
+            return;
+        }
+        Time duration = movieRepository.getDuration(movieID);
+        System.out.println(movieRepository.updateMovie(movieID, title, duration)
+                ? Constants.SUCCESSFUL_CREATE_MOVIE
+                : Constants.FAILED_CREATE_MOVIE);
+    }
+
+    @Override
+    public void updateDuration(int movieID) throws SQLException {
+        Time duration = Time.valueOf(inputDuration());
+        String title = movieRepository.getTitle(movieID);
+        if (movieRepository.checkAvailabilityMovie(title, duration)
+                && SessionServiceImpl.sessionService.updateSessions(movieID, duration)) {
+            movieRepository.updateMovie(movieID, title, duration);
+            System.out.println(Constants.SUCCESSFUL_CREATE_MOVIE);
+        } else {
+            System.out.println(Constants.FAILED_CREATE_MOVIE);
+            System.out.println(Constants.SESSIONS_IS_BUSY);
+        }
     }
 
     private boolean checkCorrectDuration(int hours, int minutes) {

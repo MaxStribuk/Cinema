@@ -70,9 +70,10 @@ public class UserController {
                         return;
                     }
                 }
-                case "8" -> {}
-                case "9" -> {}
-                case "10" -> {}
+                case "8" -> movieController.updateMovie();
+                case "9" -> sessionController.updateSession();
+                case "10" -> userService.printUsers();
+                case "11" -> ticketController.buyUserTicket();
                 case "0" -> {
                     System.out.println(Constants.FAREWELL);
                     System.exit(0);
