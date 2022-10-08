@@ -19,8 +19,6 @@ import java.util.List;
 public class SessionServiceImpl implements SessionService {
 
     private final SessionRepository sessionRepository = new SessionRepository();
-    public static SessionServiceImpl sessionService = new SessionServiceImpl();
-    private final MovieService movieService = new MovieServiceImpl();
 
     @Override
     public void printAllSessions() {
@@ -74,13 +72,13 @@ public class SessionServiceImpl implements SessionService {
     public boolean createSession(int movieID, Timestamp startTime) {
         Time duration;
         try {
-            duration = movieService.getDuration(movieID);
+            duration = Service.movieService.getDuration(movieID);
+            Timestamp endTime = calculateEndTime(startTime, duration);
+            return sessionRepository.createSession(movieID, startTime, endTime);
         } catch (SQLException e) {
             System.out.println(Constants.FAILED_CONNECTION_DATABASE);
             return false;
         }
-        Timestamp endTime = calculateEndTime(startTime, duration);
-        return sessionRepository.createSession(movieID, startTime, endTime);
     }
 
     @Override
@@ -132,9 +130,9 @@ public class SessionServiceImpl implements SessionService {
     }
 
     private void updateSession(int sessionID, Timestamp startTime, int movieID) throws SQLException {
-        Time duration = movieService.getDuration(movieID);
+        Time duration = Service.movieService.getDuration(movieID);
         Timestamp endTime = calculateEndTime(startTime, duration);
-        if (sessionRepository.updateSession(sessionID, startTime, endTime)) {
+        if (sessionRepository.updateSession(sessionID, startTime, endTime, movieID)) {
             System.out.println(Constants.SUCCESSFUL_CREATE_SESSION);
         } else {
             System.out.println(Constants.SESSIONS_IS_BUSY);
@@ -154,6 +152,6 @@ public class SessionServiceImpl implements SessionService {
     }
 
     private boolean checkMovieIDAvailability(int id) {
-        return movieService.checkMovieAvailability(id);
+        return Service.movieService.checkMovieAvailability(id);
     }
 }

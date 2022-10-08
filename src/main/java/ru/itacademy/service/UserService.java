@@ -25,4 +25,8 @@ public interface UserService {
     void printUsers();
 
     boolean checkUserAvailability(int userID) throws SQLException;
+
+    void updateRole(int userID) throws SQLException;
+
+    void updateStatus(int userID) throws SQLException;
 }

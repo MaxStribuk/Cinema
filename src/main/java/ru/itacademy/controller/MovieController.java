@@ -1,7 +1,6 @@
 package ru.itacademy.controller;
 
-import ru.itacademy.service.MovieService;
-import ru.itacademy.service.MovieServiceImpl;
+import ru.itacademy.service.Service;
 import ru.itacademy.util.Constants;
 
 import java.sql.SQLException;
@@ -9,17 +8,14 @@ import java.time.LocalTime;
 
 public class MovieController {
 
-    MovieService movieService = new MovieServiceImpl();
-
     public void createMovie() {
-        String title = movieService.inputTitle();
+        String title = Service.movieService.inputTitle();
         if (title.equals("0")) {
             return;
         }
-        System.out.println(Constants.CREATING_MOVIE_DURATION);
-        LocalTime duration = movieService.inputDuration();
+        LocalTime duration = Service.movieService.inputDuration();
         try {
-            if (movieService.createMovie(title, duration)) {
+            if (Service.movieService.createMovie(title, duration)) {
                 System.out.println(Constants.SUCCESSFUL_CREATE_MOVIE);
             } else {
                 System.out.println(Constants.FAILED_CREATE_MOVIE);
@@ -30,7 +26,7 @@ public class MovieController {
     }
 
     public void printAllMovies() {
-        movieService.printAllMovies();
+        Service.movieService.printAllMovies();
     }
 
     public void updateMovie() {
@@ -41,7 +37,7 @@ public class MovieController {
                 if (movieID == 0) {
                     return;
                 }
-                if (movieService.checkMovieAvailability(movieID)) {
+                if (Service.movieService.checkMovieAvailability(movieID)) {
                     updateMovie(movieID);
                     return;
                 } else {
@@ -63,11 +59,11 @@ public class MovieController {
                         return;
                     }
                     case 1 -> {
-                        movieService.updateTitle(movieID);
+                        Service.movieService.updateTitle(movieID);
                         return;
                     }
                     case 2 -> {
-                        movieService.updateDuration(movieID);
+                        Service.movieService.updateDuration(movieID);
                         return;
                     }
                     default -> throw new NumberFormatException();

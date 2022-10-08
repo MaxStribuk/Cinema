@@ -12,7 +12,6 @@ import java.time.LocalTime;
 public class MovieServiceImpl implements MovieService {
 
     private final MovieRepository movieRepository = new MovieRepository();
-//    private final SessionService sessionService = new SessionServiceImpl();
 
     @Override
     public void printAllMovies() {
@@ -50,6 +49,7 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     public LocalTime inputDuration() {
+        System.out.println(Constants.CREATING_MOVIE_DURATION);
         while (true) {
             try {
                 System.out.println(Constants.CREATING_MOVIE_DURATION_HOURS);
@@ -94,7 +94,7 @@ public class MovieServiceImpl implements MovieService {
         Time duration = Time.valueOf(inputDuration());
         String title = movieRepository.getTitle(movieID);
         if (movieRepository.checkAvailabilityMovie(title, duration)
-                && SessionServiceImpl.sessionService.updateSessions(movieID, duration)) {
+                && Service.sessionService.updateSessions(movieID, duration)) {
             movieRepository.updateMovie(movieID, title, duration);
             System.out.println(Constants.SUCCESSFUL_CREATE_MOVIE);
         } else {

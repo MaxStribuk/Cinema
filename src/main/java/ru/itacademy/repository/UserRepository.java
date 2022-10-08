@@ -94,4 +94,30 @@ public class UserRepository {
             return stmt.executeQuery().first();
         }
     }
+
+    public boolean updateRole(int userID, String role) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "UPDATE user " +
+                            "SET role = ? " +
+                            "WHERE user_id = ?");
+            stmt.setString(1, role);
+            stmt.setInt(2, userID);
+            stmt.execute();
+            return true;
+        }
+    }
+
+    public boolean updateStatus(int userID, String status) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "UPDATE user " +
+                            "SET status = ? " +
+                            "WHERE user_id = ?");
+            stmt.setString(1, status);
+            stmt.setInt(2, userID);
+            stmt.execute();
+            return true;
+        }
+    }
 }

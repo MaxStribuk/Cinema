@@ -46,7 +46,7 @@ public class SessionRepository {
         return stmt.executeQuery();
     }
 
-    public boolean createSession(int movieID, Timestamp startTime, Timestamp endTime) {
+    public boolean createSession(int movieID, Timestamp startTime, Timestamp endTime) throws SQLException {
         try (Connection connection = ConnectionManager.open()) {
             if (checkAvailabilitySession(connection, 0, startTime, endTime)) {
                 PreparedStatement stmt = connection.prepareStatement(
@@ -60,9 +60,6 @@ public class SessionRepository {
                 System.out.println(Constants.SESSIONS_IS_BUSY);
                 return false;
             }
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-            return false;
         }
     }
 
@@ -74,8 +71,8 @@ public class SessionRepository {
             if (sessions.getInt("session_id") != sessionID) {
                 Timestamp currentSessionStartTime = sessions.getTimestamp("start_time");
                 Timestamp currentSessionEndTime = sessions.getTimestamp("end_time");
-                if (!checkAvailabilitySession(startTime, endTime, currentSessionStartTime)
-                        || !checkAvailabilitySession(startTime, endTime, currentSessionEndTime)) {
+                if (checkAvailabilitySession(startTime, endTime, currentSessionStartTime)
+                        || checkAvailabilitySession(startTime, endTime, currentSessionEndTime)) {
                     return false;
                 }
             }
@@ -86,8 +83,8 @@ public class SessionRepository {
 
     private boolean checkAvailabilitySession(Timestamp startTime,
                                              Timestamp endTime, Timestamp currentSessionTime) {
-        return currentSessionTime.before(startTime)
-                || currentSessionTime.after(endTime);
+        return !currentSessionTime.before(startTime)
+                && !currentSessionTime.after(endTime);
     }
 
     public int getSessionID(Timestamp startTime) throws SQLException {
@@ -118,17 +115,19 @@ public class SessionRepository {
     }
 
     public boolean updateSession(int sessionID, Timestamp startTime,
-                                 Timestamp endTime) throws SQLException {
+                                 Timestamp endTime, int movieID) throws SQLException {
         try (Connection connection = ConnectionManager.open()) {
             if (checkAvailabilitySession(connection, sessionID, startTime, endTime)) {
                 PreparedStatement stmt = connection.prepareStatement(
                         "UPDATE session " +
                                 "SET start_time = ?, " +
-                                "end_time = ? " +
+                                "end_time = ?, " +
+                                "movie_id = ? " +
                                 "WHERE session_id = ?");
                 stmt.setTimestamp(1, startTime);
                 stmt.setTimestamp(2, endTime);
-                stmt.setInt(3, sessionID);
+                stmt.setInt(3, movieID);
+                stmt.setInt(4, sessionID);
                 stmt.execute();
                 return true;
             } else {
@@ -177,7 +176,8 @@ public class SessionRepository {
 
     public boolean updateSessions(List<Session> sessions) throws SQLException {
         for (Session session : sessions) {
-            if (!updateSession(session.getID(), session.getStartTime(), session.getEndTime())) {
+            if (!updateSession(session.getID(), session.getStartTime(),
+                    session.getEndTime(), session.getMovieID())) {
                 return false;
             }
         }

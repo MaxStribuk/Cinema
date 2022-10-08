@@ -61,4 +61,8 @@ public class Session {
     public int getID() {
         return id;
     }
+
+    public int getMovieID() {
+        return movieID;
+    }
 }

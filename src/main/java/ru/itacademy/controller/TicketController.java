@@ -1,13 +1,8 @@
 package ru.itacademy.controller;
 
-import ru.itacademy.service.MovieService;
-import ru.itacademy.service.MovieServiceImpl;
-import ru.itacademy.service.SessionService;
-import ru.itacademy.service.SessionServiceImpl;
+import ru.itacademy.service.Service;
 import ru.itacademy.service.TicketService;
 import ru.itacademy.service.TicketServiceImpl;
-import ru.itacademy.service.UserService;
-import ru.itacademy.service.UserServiceImpl;
 import ru.itacademy.util.Constants;
 
 import java.sql.SQLException;
@@ -16,9 +11,6 @@ import java.sql.Timestamp;
 public class TicketController {
 
     TicketService ticketService = new TicketServiceImpl();
-    SessionService sessionService = new SessionServiceImpl();
-    MovieService movieService = new MovieServiceImpl();
-    UserService userService = new UserServiceImpl();
 
     public void createTicketsForSession(Timestamp startTime) {
         ticketService.createTicketsForSession(startTime);
@@ -32,7 +24,7 @@ public class TicketController {
                 if (sessionID == 0) {
                     return;
                 }
-                if (sessionService.checkSessionIDCorrectness(sessionID)) {
+                if (Service.sessionService.checkSessionIDCorrectness(sessionID)) {
                     ticketService.printTicketsWithSessionID(sessionID);
                     return;
                 } else {
@@ -54,8 +46,8 @@ public class TicketController {
                 if (movieID == 0) {
                     return;
                 }
-                if (movieService.checkMovieAvailability(movieID)) {
-                    ticketService.printTicketsWithMovieID(movieID);
+                if (Service.movieService.checkMovieAvailability(movieID)) {
+                    Service.ticketService.printTicketsWithMovieID(movieID);
                     return;
                 } else {
                     throw new NumberFormatException();
@@ -118,7 +110,7 @@ public class TicketController {
                 if (userID == 0) {
                     return;
                 }
-                if (userService.checkUserAvailability(userID)) {
+                if (Service.userService.checkUserAvailability(userID)) {
                     if (ticketService.printUserTickets(userID)) {
                         returnTicket(userID);
                     }

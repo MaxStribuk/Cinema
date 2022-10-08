@@ -12,13 +12,12 @@ import java.util.List;
 public class TicketServiceImpl implements TicketService {
 
     TicketRepository ticketRepository = new TicketRepository();
-    SessionService sessionService = new SessionServiceImpl();
 
     @Override
     public void createTicketsForSession(Timestamp startTime) {
         int sessionID;
         try {
-            sessionID = sessionService.getSessionID(startTime);
+            sessionID = Service.sessionService.getSessionID(startTime);
         } catch (SQLException e) {
             System.out.println(Constants.FAILED_CONNECTION_DATABASE);
             return;

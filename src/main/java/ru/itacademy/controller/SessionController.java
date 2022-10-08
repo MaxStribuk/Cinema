@@ -1,7 +1,6 @@
 package ru.itacademy.controller;
 
-import ru.itacademy.service.SessionService;
-import ru.itacademy.service.SessionServiceImpl;
+import ru.itacademy.service.Service;
 import ru.itacademy.util.Constants;
 
 import java.sql.SQLException;
@@ -9,16 +8,15 @@ import java.sql.Timestamp;
 
 public class SessionController {
 
-    SessionService sessionService = new SessionServiceImpl();
     TicketController ticketController = new TicketController();
 
     public void createSession() {
-        int movieID = sessionService.inputMovieID();
+        int movieID = Service.sessionService.inputMovieID();
         if (movieID == 0) {
             return;
         }
-        Timestamp startTime = sessionService.inputStartTime();
-        if (sessionService.createSession(movieID, startTime)) {
+        Timestamp startTime = Service.sessionService.inputStartTime();
+        if (Service.sessionService.createSession(movieID, startTime)) {
             System.out.println(Constants.SUCCESSFUL_CREATE_SESSION);
             ticketController.createTicketsForSession(startTime);
         } else {
@@ -27,7 +25,7 @@ public class SessionController {
     }
 
     public void printAllSessions() {
-        sessionService.printAllSessions();
+        Service.sessionService.printAllSessions();
     }
 
     public void updateSession() {
@@ -38,7 +36,7 @@ public class SessionController {
                 if (session_ID == 0) {
                     return;
                 }
-                if (sessionService.checkSessionIDCorrectness(session_ID)) {
+                if (Service.sessionService.checkSessionIDCorrectness(session_ID)) {
                     updateSession(session_ID);
                     return;
                 } else {
@@ -63,11 +61,11 @@ public class SessionController {
                         return;
                     }
                     case 1 -> {
-                        sessionService.updateStartTime(session_ID);
+                        Service.sessionService.updateStartTime(session_ID);
                         return;
                     }
                     case 2 -> {
-                        sessionService.updateMovieID(session_ID);
+                        Service.sessionService.updateMovieID(session_ID);
                         return;
                     }
                     default -> throw new NumberFormatException();
