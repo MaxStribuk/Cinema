@@ -1,5 +1,6 @@
 package ru.itacademy.repository;
 
+import ru.itacademy.model.Session;
 import ru.itacademy.model.Ticket;
 import ru.itacademy.util.ConnectionManager;
 import ru.itacademy.util.Constants;
@@ -181,5 +182,28 @@ public class TicketRepository {
         return tickets.getTimestamp("start_time")
                 .toLocalDateTime()
                 .isBefore(LocalDateTime.now());
+    }
+
+    public void removeTicketsForSession(int sessionID) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "DELETE FROM ticket " +
+                            "WHERE session_id = ?");
+            stmt.setInt(1, sessionID);
+            stmt.execute();
+        }
+    }
+
+    public void removeTicketsForSessions(List<Session> sessions) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "DELETE FROM ticket " +
+                            "WHERE session_id = ?");
+            for (Session session : sessions) {
+                stmt.setInt(1, session.getID());
+                stmt.addBatch();
+            }
+            stmt.executeBatch();
+        }
     }
 }

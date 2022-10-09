@@ -21,8 +21,8 @@ public class SessionServiceImpl implements SessionService {
     private final SessionRepository sessionRepository = new SessionRepository();
 
     @Override
-    public void printAllSessions() {
-        sessionRepository.printSessions();
+    public boolean printFutureSessions() {
+        return sessionRepository.printFutureSessions();
     }
 
     @Override
@@ -97,7 +97,6 @@ public class SessionServiceImpl implements SessionService {
 
     @Override
     public void updateStartTime(int sessionID) throws SQLException {
-        System.out.println(Constants.CREATING_SESSION_START_TIME);
         Timestamp startTime = inputStartTime();
         int movieID = sessionRepository.getMovieID(sessionID);
         updateSession(sessionID, startTime, movieID);
@@ -127,6 +126,21 @@ public class SessionServiceImpl implements SessionService {
             }
         }
         return sessionRepository.updateSessions(sessions);
+    }
+
+    @Override
+    public void printAllSessions() {
+        sessionRepository.printAllSessions();
+    }
+
+    @Override
+    public void removeSession(int sessionID) throws SQLException {
+        sessionRepository.removeSession(sessionID);
+    }
+
+    @Override
+    public List<Session> getSessions(int movieID) throws SQLException {
+        return sessionRepository.getSessions(movieID);
     }
 
     private void updateSession(int sessionID, Timestamp startTime, int movieID) throws SQLException {

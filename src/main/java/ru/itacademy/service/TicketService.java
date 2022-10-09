@@ -1,6 +1,10 @@
 package ru.itacademy.service;
 
+import ru.itacademy.model.Session;
+
+import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.List;
 
 public interface TicketService {
     void createTicketsForSession(Timestamp startTime);
@@ -16,4 +20,8 @@ public interface TicketService {
     boolean printUserTickets(int userID);
 
     void returnTicket(int ticketID, int userID);
+
+    void removeTicketsForSession(int sessionID) throws SQLException;
+
+    void removeTicketsForSessions(List<Session> sessions) throws SQLException;
 }

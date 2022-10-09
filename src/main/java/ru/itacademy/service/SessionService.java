@@ -1,11 +1,14 @@
 package ru.itacademy.service;
 
+import ru.itacademy.model.Session;
+
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.List;
 
 public interface SessionService {
-    void printAllSessions();
+    boolean printFutureSessions();
 
     int inputMovieID();
 
@@ -22,4 +25,10 @@ public interface SessionService {
     void updateMovieID(int sessionID) throws SQLException;
 
     boolean updateSessions(int movieID, Time duration) throws SQLException;
+
+    void printAllSessions();
+
+    void removeSession(int sessionID) throws SQLException;
+
+    List<Session> getSessions(int movieID) throws SQLException;
 }

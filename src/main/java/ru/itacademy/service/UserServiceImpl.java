@@ -5,13 +5,16 @@ import ru.itacademy.model.User;
 import ru.itacademy.repository.UserRepository;
 import ru.itacademy.util.Constants;
 import ru.itacademy.util.Exceptions.InvalidUserException;
+import ru.itacademy.util.HashGenerator;
 
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository = new UserRepository();
     private User user;
+    private final HashGenerator hashGenerator = new HashGenerator();
 
     private boolean checkLoginAvailability(String login) throws SQLException {
         return userRepository.checkAvailabilityLogin(login);
@@ -113,96 +116,106 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-        private User getUser (String login, String password) throws SQLException, InvalidUserException {
-            return userRepository.getUser(login, password);
-        }
+    private User getUser(String login, String password) throws SQLException, InvalidUserException {
+        return userRepository.getUser(login, password);
+    }
 
-        @Override
-        public int establishUserStatus (User user){
-            if (!user.getStatus().equals("active")) {
-                return 0;
-            } else
-                switch (user.getRole()) {
-                    case "user" -> {
-                        return 1;
-                    }
-                    case "manager" -> {
-                        return 2;
-                    }
-                    case "admin" -> {
-                        return 3;
-                    }
-                    default -> {
-                        return 0;
-                    }
+    @Override
+    public int establishUserStatus(User user) {
+        if (!user.getStatus().equals("active")) {
+            return 0;
+        } else
+            switch (user.getRole()) {
+                case "user" -> {
+                    return 1;
                 }
-        }
+                case "manager" -> {
+                    return 2;
+                }
+                case "admin" -> {
+                    return 3;
+                }
+                default -> {
+                    return 0;
+                }
+            }
+    }
 
-        @Override
-        public boolean deleteAccount (User user){
-            return userRepository.deleteUserAccount(user);
-        }
+    @Override
+    public boolean deleteAccount(User user) {
+        return userRepository.deleteUserAccount(user);
+    }
 
-        @Override
-        public boolean checkUserAvailability (String login, String password){
+    @Override
+    public boolean checkUserAvailability(String login, String password) {
+        try {
+            if (checkDataCorrectness(login)
+                    && checkDataCorrectness(password)) {
+                try {
+                    password = hashGenerator.createSHAHash(password);
+                } catch (NoSuchAlgorithmException e) {
+                    System.out.println(Constants.INVALID_HASH_ALGORITHM);
+                }
+                user = getUser(login, password);
+                return true;
+            } else {
+                System.out.println(Constants.FAILED_AUTHORIZATION_USER);
+                return false;
+            }
+        } catch (SQLException e) {
+            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+            return false;
+        } catch (InvalidUserException e) {
+            System.out.println(Constants.INVALID_USER);
+            return false;
+        }
+    }
+
+    @Override
+    public String inputLogin() {
+        String login;
+        while (true) {
+            login = Menu.in.nextLine();
+            if (login.equals("0")) {
+                return "0";
+            }
             try {
-                if (checkDataCorrectness(login)
-                        && checkDataCorrectness(password)) {
-                    user = getUser(login, password);
-                    return true;
+                if (!checkDataCorrectness(login)) {
+                    System.out.println(Constants.INVALID_USER_LOGIN);
+                } else if (!checkLoginAvailability(login)) {
+                    System.out.println(Constants.LOGIN_IS_BUSY);
                 } else {
-                    System.out.println(Constants.FAILED_AUTHORIZATION_USER);
-                    return false;
+                    return login;
                 }
             } catch (SQLException e) {
                 System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-                return false;
-            } catch (InvalidUserException e) {
-                System.out.println(Constants.INVALID_USER);
-                return false;
             }
-        }
-
-        @Override
-        public String inputLogin () {
-            String login;
-            while (true) {
-                login = Menu.in.nextLine();
-                if (login.equals("0")) {
-                    return "0";
-                }
-                try {
-                    if (!checkDataCorrectness(login)) {
-                        System.out.println(Constants.INVALID_USER_LOGIN);
-                    } else if (!checkLoginAvailability(login)) {
-                        System.out.println(Constants.LOGIN_IS_BUSY);
-                    } else {
-                        return login;
-                    }
-                } catch (SQLException e) {
-                    System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-                }
-            }
-        }
-
-        @Override
-        public String inputPassword () {
-            String password;
-            while (true) {
-                password = Menu.in.nextLine();
-                if (password.equals("0")) {
-                    return "0";
-                }
-                if (!checkDataCorrectness(password)) {
-                    System.out.println(Constants.INVALID_USER_PASSWORD);
-                } else {
-                    return password;
-                }
-            }
-        }
-
-        @Override
-        public User getUser () {
-            return user;
         }
     }
+
+    @Override
+    public String inputPassword() {
+        String password;
+        while (true) {
+            password = Menu.in.nextLine();
+            if (password.equals("0")) {
+                return "0";
+            }
+            if (!checkDataCorrectness(password)) {
+                System.out.println(Constants.INVALID_USER_PASSWORD);
+            } else {
+                return password;
+            }
+        }
+    }
+
+    @Override
+    public User getUser() {
+        return user;
+    }
+
+    @Override
+    public HashGenerator getHashGenerator() {
+        return hashGenerator;
+    }
+}

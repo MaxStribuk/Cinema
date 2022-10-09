@@ -14,8 +14,8 @@ public class MovieServiceImpl implements MovieService {
     private final MovieRepository movieRepository = new MovieRepository();
 
     @Override
-    public void printAllMovies() {
-        movieRepository.printMovies();
+    public boolean printAllMovies() {
+        return movieRepository.printMovies();
     }
 
     @Override
@@ -101,6 +101,11 @@ public class MovieServiceImpl implements MovieService {
             System.out.println(Constants.FAILED_CREATE_MOVIE);
             System.out.println(Constants.SESSIONS_IS_BUSY);
         }
+    }
+
+    @Override
+    public void removeMovie(int movieID) throws SQLException {
+        movieRepository.removeMovie(movieID);
     }
 
     private boolean checkCorrectDuration(int hours, int minutes) {

@@ -1,5 +1,6 @@
 package ru.itacademy.service;
 
+import ru.itacademy.model.Session;
 import ru.itacademy.model.Ticket;
 import ru.itacademy.repository.TicketRepository;
 import ru.itacademy.util.Constants;
@@ -58,6 +59,16 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public void returnTicket(int ticketID, int userID) {
         ticketRepository.returnTicket(ticketID, userID);
+    }
+
+    @Override
+    public void removeTicketsForSession(int sessionID) throws SQLException {
+        ticketRepository.removeTicketsForSession(sessionID);
+    }
+
+    @Override
+    public void removeTicketsForSessions(List<Session> sessions) throws SQLException {
+        ticketRepository.removeTicketsForSessions(sessions);
     }
 
     private ArrayList<Ticket> createTicketsForSession(int sessionID) {

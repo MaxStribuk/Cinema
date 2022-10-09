@@ -5,7 +5,7 @@ import java.sql.Time;
 import java.time.LocalTime;
 
 public interface MovieService {
-    void printAllMovies();
+    boolean printAllMovies();
 
     boolean createMovie(String title, LocalTime duration) throws SQLException;
 
@@ -20,4 +20,6 @@ public interface MovieService {
     void updateTitle(int movieID) throws SQLException;
 
     void updateDuration(int movieID) throws SQLException;
+
+    void removeMovie(int movieID) throws SQLException;
 }

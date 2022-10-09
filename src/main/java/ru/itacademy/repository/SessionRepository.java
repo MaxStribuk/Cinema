@@ -15,9 +15,33 @@ import java.util.List;
 
 public class SessionRepository {
 
-    public void printSessions() {
+    public boolean printFutureSessions() {
         try (Connection connection = ConnectionManager.open()) {
-            ResultSet sessions = getSessionsFuture(connection);
+            ResultSet sessions = getFutureSessions(connection);
+            if (!sessions.first()) {
+                System.out.println(Constants.MISSING_SESSIONS);
+                return false;
+            } else {
+                sessions.beforeFirst();
+                while (sessions.next()) {
+                    System.out.println(new Session(
+                            sessions.getInt("session_id"),
+                            sessions.getTimestamp("start_time"),
+                            sessions.getTimestamp("end_time"),
+                            sessions.getString("title")
+                    ));
+                }
+                return true;
+            }
+        } catch (SQLException e) {
+            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+            return false;
+        }
+    }
+
+    public void printAllSessions() {
+        try (Connection connection = ConnectionManager.open()) {
+            ResultSet sessions = getAllSessions(connection);
             if (!sessions.first()) {
                 System.out.println(Constants.MISSING_SESSIONS);
             } else {
@@ -36,7 +60,15 @@ public class SessionRepository {
         }
     }
 
-    private static ResultSet getSessionsFuture(Connection connection) throws SQLException {
+    private ResultSet getAllSessions(Connection connection) throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement(
+                "SELECT session_id, start_time, end_time, title " +
+                        "FROM session, movie " +
+                        "WHERE session.movie_id = movie.movie_ID");
+        return stmt.executeQuery();
+    }
+
+    private static ResultSet getFutureSessions(Connection connection) throws SQLException {
         PreparedStatement stmt = connection.prepareStatement(
                 "SELECT session_id, start_time, end_time, title " +
                         "FROM session, movie " +
@@ -66,7 +98,7 @@ public class SessionRepository {
     public boolean checkAvailabilitySession(
             Connection connection, int sessionID, Timestamp startTime,
             Timestamp endTime) throws SQLException {
-        ResultSet sessions = getSessionsFuture(connection);
+        ResultSet sessions = getAllSessions(connection);
         while (sessions.next()) {
             if (sessions.getInt("session_id") != sessionID) {
                 Timestamp currentSessionStartTime = sessions.getTimestamp("start_time");
@@ -182,5 +214,15 @@ public class SessionRepository {
             }
         }
         return true;
+    }
+
+    public void removeSession(int sessionID) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "DELETE FROM session " +
+                            "WHERE session_id = ?");
+            stmt.setInt(1, sessionID);
+            stmt.execute();
+        }
     }
 }

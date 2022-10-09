@@ -12,13 +12,14 @@ import java.sql.Time;
 
 public class MovieRepository {
 
-    public void printMovies() {
+    public boolean printMovies() {
         try (Connection connection = ConnectionManager.open()) {
             PreparedStatement stmt = connection.prepareStatement(
                     "SELECT * FROM movie");
             ResultSet movies = stmt.executeQuery();
             if (!movies.first()) {
                 System.out.println(Constants.MISSING_MOVIES);
+                return false;
             } else {
                 movies.beforeFirst();
                 while (movies.next()) {
@@ -28,9 +29,11 @@ public class MovieRepository {
                             movies.getTime("duration").toLocalTime()
                     ));
                 }
+                return true;
             }
         } catch (SQLException e) {
             System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+            return false;
         }
     }
 
@@ -113,6 +116,16 @@ public class MovieRepository {
             ResultSet movie = getMovieByID(movieID, connection);
             movie.first();
             return movie.getString("title");
+        }
+    }
+
+    public void removeMovie(int movieID) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "DELETE FROM movie " +
+                            "WHERE movie_id = ?");
+            stmt.setInt(1, movieID);
+            stmt.execute();
         }
     }
 }

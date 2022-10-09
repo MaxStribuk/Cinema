@@ -1,6 +1,7 @@
 package ru.itacademy.service;
 
 import ru.itacademy.model.User;
+import ru.itacademy.util.HashGenerator;
 
 import java.sql.SQLException;
 
@@ -29,4 +30,5 @@ public interface UserService {
     void updateRole(int userID) throws SQLException;
 
     void updateStatus(int userID) throws SQLException;
+    HashGenerator getHashGenerator();
 }

@@ -4,6 +4,7 @@ import ru.itacademy.service.Service;
 import ru.itacademy.util.Constants;
 import ru.itacademy.util.Exceptions.InvalidUserException;
 
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 
 public class UserController {
@@ -50,12 +51,14 @@ public class UserController {
             String input = Menu.in.nextLine();
             switch (input) {
                 case "1" -> {
-                    sessionController.printAllSessions();
-                    ticketController.printTicketMenuWithSessionID();
+                    if (sessionController.printFutureSessions()) {
+                        ticketController.printTicketMenuWithSessionID();
+                    }
                 }
                 case "2" -> {
-                    movieController.printAllMovies();
-                    ticketController.printTicketMenuWithMovieID();
+                    if (movieController.printAllMovies()) {
+                        ticketController.printTicketMenuWithMovieID();
+                    }
                 }
                 case "3" -> ticketController.buyTicket(Service.userService.getUser().getID());
                 case "4" -> ticketController.printUserTickets(Service.userService.getUser().getID());
@@ -77,10 +80,9 @@ public class UserController {
                 case "13" -> updateUser();
                 case "14" -> movieController.createMovie();
                 case "15" -> sessionController.createSession();
-                case "16" -> {
-                }
-                case "17" -> {
-                }
+                case "16" -> sessionController.printAllSessions();
+                case "17" -> sessionController.removeSession();
+                case "18" -> movieController.removeMovie();
                 case "0" -> {
                     System.out.println(Constants.FAREWELL);
                     System.exit(0);
@@ -154,12 +156,14 @@ public class UserController {
             String input = Menu.in.nextLine();
             switch (input) {
                 case "1" -> {
-                    sessionController.printAllSessions();
-                    ticketController.printTicketMenuWithSessionID();
+                    if (sessionController.printFutureSessions()) {
+                        ticketController.printTicketMenuWithSessionID();
+                    }
                 }
                 case "2" -> {
-                    movieController.printAllMovies();
-                    ticketController.printTicketMenuWithMovieID();
+                    if (movieController.printAllMovies()) {
+                        ticketController.printTicketMenuWithMovieID();
+                    }
                 }
                 case "3" -> ticketController.buyTicket(Service.userService.getUser().getID());
                 case "4" -> ticketController.printUserTickets(Service.userService.getUser().getID());
@@ -192,12 +196,14 @@ public class UserController {
             String input = Menu.in.nextLine();
             switch (input) {
                 case "1" -> {
-                    sessionController.printAllSessions();
-                    ticketController.printTicketMenuWithSessionID();
+                    if (sessionController.printFutureSessions()) {
+                        ticketController.printTicketMenuWithSessionID();
+                    }
                 }
                 case "2" -> {
-                    movieController.printAllMovies();
-                    ticketController.printTicketMenuWithMovieID();
+                    if (movieController.printAllMovies()) {
+                        ticketController.printTicketMenuWithMovieID();
+                    }
                 }
                 case "3" -> ticketController.buyTicket(Service.userService.getUser().getID());
                 case "4" -> ticketController.printUserTickets(Service.userService.getUser().getID());
@@ -231,8 +237,14 @@ public class UserController {
         if (password.equals("0")) {
             return;
         }
-        System.out.println(Service.userService.createUser(login, password)
-                ? Constants.SUCCESSFUL_REGISTRATION_USER
-                : Constants.FAILED_REGISTRATION_USER);
+        try {
+            password = Service.userService.getHashGenerator().createSHAHash(password);
+            System.out.println(Service.userService.createUser(login, password)
+                    ? Constants.SUCCESSFUL_REGISTRATION_USER
+                    : Constants.FAILED_REGISTRATION_USER);
+        } catch (NoSuchAlgorithmException e) {
+            System.out.println(Constants.INVALID_HASH_ALGORITHM);
+            System.out.println(Constants.FAILED_REGISTRATION_USER);
+        }
     }
 }
