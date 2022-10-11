@@ -12,7 +12,27 @@ import java.sql.Time;
 
 public class MovieRepository {
 
-    public boolean printMovies() {
+    public boolean createMovie(String title, Time duration) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "INSERT INTO movie (title, duration) VALUES (?, ?)");
+            return createMovie(title, duration, connection, stmt);
+        }
+    }
+
+    public boolean updateMovie(int movieID, String title, Time duration) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "UPDATE movie " +
+                            "SET title = ?, " +
+                            "duration = ? " +
+                            "WHERE movie_id = ?");
+            stmt.setInt(3, movieID);
+            return createMovie(title, duration, connection, stmt);
+        }
+    }
+
+    public boolean printMovies() throws SQLException {
         try (Connection connection = ConnectionManager.open()) {
             PreparedStatement stmt = connection.prepareStatement(
                     "SELECT * FROM movie");
@@ -31,22 +51,18 @@ public class MovieRepository {
                 }
                 return true;
             }
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-            return false;
         }
     }
 
-    public boolean createMovie(String title, Time duration) throws SQLException {
+    public boolean checkAvailabilityMovie(int movieID) throws SQLException {
         try (Connection connection = ConnectionManager.open()) {
-            PreparedStatement stmt = connection.prepareStatement(
-                    "INSERT INTO movie (title, duration) VALUES (?, ?)");
-            return createMovie(title, duration, connection, stmt);
+            ResultSet movie = getMovie(movieID, connection);
+            return movie.first();
         }
     }
 
-    private boolean checkAvailabilityMovie(Connection connection,
-                                           String title, Time duration)
+    public boolean checkAvailabilityMovie(Connection connection,
+                                          String title, Time duration)
             throws SQLException {
         PreparedStatement stmt = connection.prepareStatement(
                 "SELECT * FROM movie WHERE title = ? AND duration = ?");
@@ -55,47 +71,37 @@ public class MovieRepository {
         return !stmt.executeQuery().first();
     }
 
-    public boolean checkAvailabilityMovie(int movieID) {
+    public void removeMovie(int movieID) throws SQLException {
         try (Connection connection = ConnectionManager.open()) {
-            ResultSet movie = getMovieByID(movieID, connection);
-            return movie.first();
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-            return false;
+            PreparedStatement stmt = connection.prepareStatement(
+                    "DELETE FROM movie " +
+                            "WHERE movie_id = ?");
+            stmt.setInt(1, movieID);
+            stmt.execute();
         }
-    }
-
-    private ResultSet getMovieByID(int movieID, Connection connection) throws SQLException {
-        PreparedStatement stmt = connection.prepareStatement(
-                "SELECT * FROM movie WHERE movie_id = ?");
-        stmt.setInt(1, movieID);
-        return stmt.executeQuery();
     }
 
     public Time getDuration(int movieID) throws SQLException {
         try (Connection connection = ConnectionManager.open()) {
-            ResultSet movie = getMovieByID(movieID, connection);
+            ResultSet movie = getMovie(movieID, connection);
             movie.first();
             return movie.getTime("duration");
         }
     }
 
-    public boolean checkAvailabilityMovie(String title, Time duration) throws SQLException {
+    public String getTitle(int movieID) throws SQLException {
         try (Connection connection = ConnectionManager.open()) {
-            return checkAvailabilityMovie(connection, title, duration);
+            ResultSet movie = getMovie(movieID, connection);
+            movie.first();
+            return movie.getString("title");
         }
     }
 
-    public boolean updateMovie(int movieID, String title, Time duration) throws SQLException {
-        try (Connection connection = ConnectionManager.open()) {
-            PreparedStatement stmt = connection.prepareStatement(
-                    "UPDATE movie " +
-                            "SET title = ?, " +
-                            "duration = ?" +
-                            "WHERE movie_id = ?");
-            stmt.setInt(3, movieID);
-            return createMovie(title, duration, connection, stmt);
-        }
+    private ResultSet getMovie(int movieID, Connection connection) throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement(
+                "SELECT * FROM movie WHERE movie_id = ?");
+        stmt.setInt(1, movieID);
+        return stmt.executeQuery();
     }
 
     private boolean createMovie(String title, Time duration, Connection connection,
@@ -108,24 +114,6 @@ public class MovieRepository {
         } else {
             System.out.println(Constants.MOVIE_IS_BUSY);
             return false;
-        }
-    }
-
-    public String getTitle(int movieID) throws SQLException {
-        try (Connection connection = ConnectionManager.open()) {
-            ResultSet movie = getMovieByID(movieID, connection);
-            movie.first();
-            return movie.getString("title");
-        }
-    }
-
-    public void removeMovie(int movieID) throws SQLException {
-        try (Connection connection = ConnectionManager.open()) {
-            PreparedStatement stmt = connection.prepareStatement(
-                    "DELETE FROM movie " +
-                            "WHERE movie_id = ?");
-            stmt.setInt(1, movieID);
-            stmt.execute();
         }
     }
 }

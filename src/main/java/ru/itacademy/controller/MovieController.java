@@ -7,6 +7,7 @@ import ru.itacademy.util.Constants;
 import java.sql.SQLException;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class MovieController {
 
@@ -17,22 +18,25 @@ public class MovieController {
         }
         LocalTime duration = Service.movieService.inputDuration();
         try {
-            if (Service.movieService.createMovie(title, duration)) {
-                System.out.println(Constants.SUCCESSFUL_CREATE_MOVIE);
-            } else {
-                System.out.println(Constants.FAILED_CREATE_MOVIE);
-            }
+            System.out.println(Service.movieService.createMovie(title, duration)
+                    ? Constants.SUCCESSFUL_CREATE_MOVIE
+                    : Constants.FAILED_CREATE_MOVIE);
         } catch (SQLException e) {
             System.out.println(Constants.FAILED_CONNECTION_DATABASE);
         }
     }
 
-    public boolean printAllMovies() {
-        return Service.movieService.printAllMovies();
+    public boolean printMovies() {
+        try {
+            return Service.movieService.printMovies();
+        } catch (SQLException e) {
+            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+            return false;
+        }
     }
 
-    public void updateMovie() {
-        System.out.println(Constants.UPDATE_MOVIE);
+    public void changeMovie(String message, Consumer<Integer> task) {
+        System.out.println(message);
         while (true) {
             try {
                 int movieID = Integer.parseInt(Menu.in.nextLine());
@@ -40,7 +44,7 @@ public class MovieController {
                     return;
                 }
                 if (Service.movieService.checkMovieAvailability(movieID)) {
-                    updateMovie(movieID);
+                    task.accept(movieID);
                     return;
                 } else {
                     throw new NumberFormatException();
@@ -51,7 +55,7 @@ public class MovieController {
         }
     }
 
-    private void updateMovie(int movieID) {
+    public void updateMovie(int movieID) {
         while (true) {
             System.out.println(Constants.MENU_MOVIE_UPDATE);
             try {
@@ -74,32 +78,11 @@ public class MovieController {
                 System.out.println(Constants.INVALID_INPUT);
             } catch (SQLException e) {
                 System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-                return;
             }
         }
     }
 
-    public void removeMovie() {
-        System.out.println(Constants.REMOVE_MOVIE);
-        while (true) {
-            try {
-                int movieID = Integer.parseInt(Menu.in.nextLine());
-                if (movieID == 0) {
-                    return;
-                }
-                if (Service.movieService.checkMovieAvailability(movieID)) {
-                    removeMovie(movieID);
-                    return;
-                } else {
-                    throw new NumberFormatException();
-                }
-            } catch (NumberFormatException e) {
-                System.out.println(Constants.INVALID_MOVIE_ID);
-            }
-        }
-    }
-
-    private void removeMovie(int movieID) {
+    public void removeMovie(int movieID) {
         while (true) {
             System.out.println(Constants.MENU_MOVIE_REMOVE);
             try {
@@ -109,7 +92,7 @@ public class MovieController {
                         return;
                     }
                     case 1 -> {
-                        removesMovie(movieID);
+                        deleteMovie(movieID);
                         return;
                     }
                     default -> throw new NumberFormatException();
@@ -118,15 +101,16 @@ public class MovieController {
                 System.out.println(Constants.INVALID_INPUT);
             } catch (SQLException e) {
                 System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-                return;
             }
         }
     }
 
-    private void removesMovie(int movieID) throws SQLException {
+    private void deleteMovie(int movieID) throws SQLException {
         List<Session> sessions = Service.sessionService.getSessions(movieID);
-        Service.ticketService.removeTicketsForSessions(sessions);
         for (Session session: sessions) {
+            Service.ticketService.removeTickets(session.getID());
+        }
+        for (Session session : sessions) {
             Service.sessionService.removeSession(session.getID());
         }
         Service.movieService.removeMovie(movieID);

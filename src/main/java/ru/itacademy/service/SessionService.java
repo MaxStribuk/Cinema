@@ -8,27 +8,24 @@ import java.sql.Timestamp;
 import java.util.List;
 
 public interface SessionService {
-    boolean printFutureSessions();
 
-    int inputMovieID();
+    boolean printSessions(boolean isAllSessions);
+
+    int inputMovieID() throws SQLException;
 
     Timestamp inputStartTime();
 
-    boolean createSession(int movieID, Timestamp startTime);
+    boolean createSession(int movieID, Timestamp startTime) throws SQLException;
 
-    int getSessionID(Timestamp startTime) throws SQLException;
+    Session getSession(Timestamp startTime) throws SQLException;
 
-    boolean checkSessionIDCorrectness(int sessionID) throws SQLException;
+    List<Session> getSessions(int movieID) throws SQLException;
 
-    void updateStartTime(int sessionID) throws SQLException;
+    boolean checkSessionIDCorrectness(int sessionID);
 
-    void updateMovieID(int sessionID) throws SQLException;
+    void updateSession(int sessionID, boolean isUpdateMovieID) throws SQLException;
 
     boolean updateSessions(int movieID, Time duration) throws SQLException;
 
-    void printAllSessions();
-
     void removeSession(int sessionID) throws SQLException;
-
-    List<Session> getSessions(int movieID) throws SQLException;
 }

@@ -7,28 +7,27 @@ import java.sql.SQLException;
 
 public interface UserService {
 
-    boolean checkUserAvailability(String login, String password);
+    void printUsers();
 
-    int establishUserStatus(User user);
-
-    User getUser();
-
-    boolean deleteAccount(User user);
-
-    String inputLogin();
+    String inputLogin() throws SQLException;
 
     String inputPassword();
 
-    boolean checkDataCorrectness(String data);
+    boolean createUser(String login, String password) throws SQLException;
 
-    boolean createUser(String login, String password);
+    User getCurrentUser();
 
-    void printUsers();
+    HashGenerator getHashGenerator();
 
     boolean checkUserAvailability(int userID) throws SQLException;
+
+    boolean checkUserAvailability(String login, String password);
+
+    boolean checkDataCorrectness(String data);
 
     void updateRole(int userID) throws SQLException;
 
     void updateStatus(int userID) throws SQLException;
-    HashGenerator getHashGenerator();
+
+    boolean removeUser(User user);
 }

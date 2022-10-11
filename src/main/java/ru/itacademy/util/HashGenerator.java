@@ -7,19 +7,16 @@ import java.security.NoSuchAlgorithmException;
 
 public class HashGenerator {
 
-    public String createSHAHash(String input) throws NoSuchAlgorithmException {
-        String hashtext;
+    public String createSHAHash(String password) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA3-512");
         byte[] messageDigest =
-                md.digest(input.getBytes(StandardCharsets.UTF_8));
-
-        hashtext = convertToHex(messageDigest);
-        return hashtext;
+                md.digest(password.getBytes(StandardCharsets.UTF_8));
+        return convertToHex(messageDigest);
     }
 
     private static String convertToHex(final byte[] messageDigest) {
-        BigInteger bigint = new BigInteger(1, messageDigest);
-        String hexText = bigint.toString(16);
+        BigInteger bigInt = new BigInteger(1, messageDigest);
+        String hexText = bigInt.toString(16);
         while (hexText.length() < 32) {
             hexText = "0".concat(hexText);
         }

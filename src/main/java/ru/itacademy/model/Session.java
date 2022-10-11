@@ -38,12 +38,12 @@ public class Session {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Session session = (Session) o;
-        return startTime.equals(session.startTime) && endTime.equals(session.endTime) && title.equals(session.title);
+        return movieID == session.movieID && startTime.equals(session.startTime) && endTime.equals(session.endTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(startTime, endTime, title);
+        return Objects.hash(startTime, endTime, movieID);
     }
 
     public Timestamp getStartTime() {

@@ -11,13 +11,12 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
 
 public class SessionRepository {
 
-    public boolean printFutureSessions() {
+    public boolean printSessions(boolean isAllSessions) throws SQLException {
         try (Connection connection = ConnectionManager.open()) {
-            ResultSet sessions = getFutureSessions(connection);
+            ResultSet sessions = getSessions(connection, isAllSessions);
             if (!sessions.first()) {
                 System.out.println(Constants.MISSING_SESSIONS);
                 return false;
@@ -33,49 +32,7 @@ public class SessionRepository {
                 }
                 return true;
             }
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-            return false;
         }
-    }
-
-    public void printAllSessions() {
-        try (Connection connection = ConnectionManager.open()) {
-            ResultSet sessions = getAllSessions(connection);
-            if (!sessions.first()) {
-                System.out.println(Constants.MISSING_SESSIONS);
-            } else {
-                sessions.beforeFirst();
-                while (sessions.next()) {
-                    System.out.println(new Session(
-                            sessions.getInt("session_id"),
-                            sessions.getTimestamp("start_time"),
-                            sessions.getTimestamp("end_time"),
-                            sessions.getString("title")
-                    ));
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-        }
-    }
-
-    private ResultSet getAllSessions(Connection connection) throws SQLException {
-        PreparedStatement stmt = connection.prepareStatement(
-                "SELECT session_id, start_time, end_time, title " +
-                        "FROM session, movie " +
-                        "WHERE session.movie_id = movie.movie_ID");
-        return stmt.executeQuery();
-    }
-
-    private static ResultSet getFutureSessions(Connection connection) throws SQLException {
-        PreparedStatement stmt = connection.prepareStatement(
-                "SELECT session_id, start_time, end_time, title " +
-                        "FROM session, movie " +
-                        "WHERE session.movie_id = movie.movie_ID " +
-                        "AND start_time > ?");
-        stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
-        return stmt.executeQuery();
     }
 
     public boolean createSession(int movieID, Timestamp startTime, Timestamp endTime) throws SQLException {
@@ -92,57 +49,6 @@ public class SessionRepository {
                 System.out.println(Constants.SESSIONS_IS_BUSY);
                 return false;
             }
-        }
-    }
-
-    public boolean checkAvailabilitySession(
-            Connection connection, int sessionID, Timestamp startTime,
-            Timestamp endTime) throws SQLException {
-        ResultSet sessions = getAllSessions(connection);
-        while (sessions.next()) {
-            if (sessions.getInt("session_id") != sessionID) {
-                Timestamp currentSessionStartTime = sessions.getTimestamp("start_time");
-                Timestamp currentSessionEndTime = sessions.getTimestamp("end_time");
-                if (checkAvailabilitySession(startTime, endTime, currentSessionStartTime)
-                        || checkAvailabilitySession(startTime, endTime, currentSessionEndTime)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-
-    }
-
-    private boolean checkAvailabilitySession(Timestamp startTime,
-                                             Timestamp endTime, Timestamp currentSessionTime) {
-        return !currentSessionTime.before(startTime)
-                && !currentSessionTime.after(endTime);
-    }
-
-    public int getSessionID(Timestamp startTime) throws SQLException {
-        try (Connection connection = ConnectionManager.open()) {
-            PreparedStatement stmt = connection.prepareStatement(
-                    "SELECT * FROM session WHERE start_time = ?");
-            stmt.setTimestamp(1, startTime);
-            ResultSet session = stmt.executeQuery();
-            session.first();
-            return session.getInt("session_id");
-        }
-    }
-
-    public boolean checkAvailabilitySession(int sessionID) throws SQLException {
-        try (Connection connection = ConnectionManager.open()) {
-            PreparedStatement stmt = connection.prepareStatement(
-                    "SELECT * FROM session WHERE session_id = ?");
-            stmt.setInt(1, sessionID);
-            return stmt.executeQuery().first();
-        }
-    }
-
-    public int getMovieID(int sessionID) throws SQLException {
-        try (Connection connection = ConnectionManager.open()) {
-            ResultSet session = getSession(sessionID, connection);
-            return session.getInt("movie_id");
         }
     }
 
@@ -168,22 +74,61 @@ public class SessionRepository {
         }
     }
 
-    public Timestamp getStartTime(int sessionID) throws SQLException {
+    public boolean checkAvailabilitySession(
+            Connection connection, int sessionID, Timestamp startTime,
+            Timestamp endTime) throws SQLException {
+        ResultSet sessions = getSessions(connection, true);
+        while (sessions.next()) {
+            if (sessions.getInt("session_id") != sessionID) {
+                Timestamp currentSessionStartTime = sessions.getTimestamp("start_time");
+                Timestamp currentSessionEndTime = sessions.getTimestamp("end_time");
+                if (checkAvailabilitySession(startTime, endTime, currentSessionStartTime)
+                        || checkAvailabilitySession(startTime, endTime, currentSessionEndTime)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+
+    }
+
+    public boolean checkAvailabilitySession(int sessionID) throws SQLException {
         try (Connection connection = ConnectionManager.open()) {
-            ResultSet session = getSession(sessionID, connection);
-            return session.getTimestamp("start_time");
+            PreparedStatement stmt = connection.prepareStatement(
+                    "SELECT * FROM session WHERE session_id = ?");
+            stmt.setInt(1, sessionID);
+            return stmt.executeQuery().first();
         }
     }
 
-    private static ResultSet getSession(int sessionID, Connection connection) throws SQLException {
-        PreparedStatement stmt = connection.prepareStatement(
-                "SELECT * " +
-                        "FROM session " +
-                        "WHERE session_id = ?");
-        stmt.setInt(1, sessionID);
-        ResultSet session = stmt.executeQuery();
-        session.first();
-        return session;
+    public void removeSession(int sessionID) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "DELETE FROM session " +
+                            "WHERE session_id = ?");
+            stmt.setInt(1, sessionID);
+            stmt.execute();
+        }
+    }
+
+    public Session getSession(Timestamp startTime) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "SELECT * FROM session WHERE start_time = ?");
+            stmt.setTimestamp(1, startTime);
+            return getSession(stmt);
+        }
+    }
+
+    public Session getSession(int sessionID) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "SELECT * " +
+                            "FROM session " +
+                            "WHERE session_id = ?");
+            stmt.setInt(1, sessionID);
+            return getSession(stmt);
+        }
     }
 
     public ArrayList<Session> getSessions(int movieID) throws SQLException {
@@ -206,23 +151,43 @@ public class SessionRepository {
         }
     }
 
-    public boolean updateSessions(List<Session> sessions) throws SQLException {
-        for (Session session : sessions) {
-            if (!updateSession(session.getID(), session.getStartTime(),
-                    session.getEndTime(), session.getMovieID())) {
-                return false;
-            }
-        }
-        return true;
+    private Session getSession(PreparedStatement stmt) throws SQLException {
+        ResultSet session = stmt.executeQuery();
+        session.first();
+        return new Session(
+                session.getInt("session_id"),
+                session.getTimestamp("start_time"),
+                session.getTimestamp("end_time"),
+                session.getInt("movie_id")
+        );
     }
 
-    public void removeSession(int sessionID) throws SQLException {
-        try (Connection connection = ConnectionManager.open()) {
-            PreparedStatement stmt = connection.prepareStatement(
-                    "DELETE FROM session " +
-                            "WHERE session_id = ?");
-            stmt.setInt(1, sessionID);
-            stmt.execute();
+    private boolean checkAvailabilitySession(Timestamp startTime,
+                                             Timestamp endTime, Timestamp currentSessionTime) {
+        return !currentSessionTime.before(startTime)
+                && !currentSessionTime.after(endTime);
+    }
+
+    /**
+     * if the is All Sessions parameter is true,
+     * the method will return all available sessions,
+     * and if false,
+     * the method will return only sessions whose start time has not yet come.
+     */
+    private ResultSet getSessions(Connection connection, boolean isAllSessions)
+            throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement(isAllSessions
+                ? "SELECT session_id, start_time, end_time, title " +
+                        "FROM session, movie " +
+                        "WHERE session.movie_id = movie.movie_ID"
+                : "SELECT session_id, start_time, end_time, title " +
+                        "FROM session, movie " +
+                        "WHERE session.movie_id = movie.movie_ID " +
+                        "AND start_time > ?"
+        );
+        if (!isAllSessions) {
+            stmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
         }
+        return stmt.executeQuery();
     }
 }

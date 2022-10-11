@@ -13,26 +13,12 @@ import java.sql.SQLException;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository = new UserRepository();
-    private User user;
+    private User currentUser;
     private final HashGenerator hashGenerator = new HashGenerator();
-
-    private boolean checkLoginAvailability(String login) throws SQLException {
-        return userRepository.checkAvailabilityLogin(login);
-    }
 
     @Override
     public boolean checkDataCorrectness(String data) {
         return data.matches("[a-zA-Z0-9]{5,32}");
-    }
-
-    @Override
-    public boolean createUser(String login, String password) {
-        return userRepository.createUser(login, password);
-    }
-
-    @Override
-    public void printUsers() {
-        userRepository.printUsers();
     }
 
     @Override
@@ -41,8 +27,24 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public boolean createUser(String login, String password) throws SQLException {
+        return userRepository.createUser(login, password);
+    }
+
+    @Override
+    public void printUsers() {
+        try {
+            userRepository.printUsers();
+        } catch (SQLException e) {
+            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+        }
+    }
+
+    @Override
     public void updateRole(int userID) throws SQLException {
-        String role = inputRole();
+        String role = inputUserData(Constants.MENU_USER_UPDATE_ROLE,
+                "user", "manager", "admin"
+        );
         if (role.equals("0")) {
             return;
         }
@@ -53,7 +55,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateStatus(int userID) throws SQLException {
-        String status = inputStatus();
+        String status = inputUserData(Constants.MENU_USER_UPDATE_STATUS,
+                "active", "blocked", "deleted"
+        );
         if (status.equals("0")) {
             return;
         }
@@ -62,88 +66,14 @@ public class UserServiceImpl implements UserService {
                 : Constants.FAILED_UPDATE_USER);
     }
 
-    private String inputStatus() {
-        int status;
-        while (true) {
-            System.out.println(Constants.MENU_USER_UPDATE_STATUS);
-            try {
-                status = Integer.parseInt(Menu.in.nextLine());
-                switch (status) {
-                    case 0 -> {
-                        return "0";
-                    }
-                    case 1 -> {
-                        return "active";
-                    }
-                    case 2 -> {
-                        return "blocked";
-                    }
-                    case 3 -> {
-                        return "deleted";
-                    }
-                    default -> throw new NumberFormatException();
-                }
-            } catch (NumberFormatException e) {
-                System.out.println(Constants.INVALID_INPUT);
-            }
-        }
-    }
-
-    private String inputRole() {
-        int role;
-        while (true) {
-            System.out.println(Constants.MENU_USER_UPDATE_ROLE);
-            try {
-                role = Integer.parseInt(Menu.in.nextLine());
-                switch (role) {
-                    case 0 -> {
-                        return "0";
-                    }
-                    case 1 -> {
-                        return "user";
-                    }
-                    case 2 -> {
-                        return "manager";
-                    }
-                    case 3 -> {
-                        return "admin";
-                    }
-                    default -> throw new NumberFormatException();
-                }
-            } catch (NumberFormatException e) {
-                System.out.println(Constants.INVALID_INPUT);
-            }
-        }
-    }
-
-    private User getUser(String login, String password) throws SQLException, InvalidUserException {
-        return userRepository.getUser(login, password);
-    }
-
     @Override
-    public int establishUserStatus(User user) {
-        if (!user.getStatus().equals("active")) {
-            return 0;
-        } else
-            switch (user.getRole()) {
-                case "user" -> {
-                    return 1;
-                }
-                case "manager" -> {
-                    return 2;
-                }
-                case "admin" -> {
-                    return 3;
-                }
-                default -> {
-                    return 0;
-                }
-            }
-    }
-
-    @Override
-    public boolean deleteAccount(User user) {
-        return userRepository.deleteUserAccount(user);
+    public boolean removeUser(User user) {
+        try {
+            return userRepository.removeUser(user);
+        } catch (SQLException e) {
+            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+            return false;
+        }
     }
 
     @Override
@@ -151,12 +81,8 @@ public class UserServiceImpl implements UserService {
         try {
             if (checkDataCorrectness(login)
                     && checkDataCorrectness(password)) {
-                try {
-                    password = hashGenerator.createSHAHash(password);
-                } catch (NoSuchAlgorithmException e) {
-                    System.out.println(Constants.INVALID_HASH_ALGORITHM);
-                }
-                user = getUser(login, password);
+                currentUser = userRepository.getUser(
+                        login, hashGenerator.createSHAHash(password));
                 return true;
             } else {
                 System.out.println(Constants.FAILED_AUTHORIZATION_USER);
@@ -168,33 +94,34 @@ public class UserServiceImpl implements UserService {
         } catch (InvalidUserException e) {
             System.out.println(Constants.INVALID_USER);
             return false;
+        } catch (NoSuchAlgorithmException e) {
+            System.out.println(Constants.INVALID_HASH_ALGORITHM);
+            return false;
         }
     }
 
     @Override
-    public String inputLogin() {
+    public String inputLogin() throws SQLException {
+        System.out.println(Constants.CREATING_USER_LOGIN);
         String login;
         while (true) {
             login = Menu.in.nextLine();
             if (login.equals("0")) {
                 return "0";
             }
-            try {
-                if (!checkDataCorrectness(login)) {
-                    System.out.println(Constants.INVALID_USER_LOGIN);
-                } else if (!checkLoginAvailability(login)) {
-                    System.out.println(Constants.LOGIN_IS_BUSY);
-                } else {
-                    return login;
-                }
-            } catch (SQLException e) {
-                System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+            if (!checkDataCorrectness(login)) {
+                System.out.println(Constants.INVALID_USER_LOGIN);
+            } else if (!userRepository.checkAvailabilityUser(login)) {
+                System.out.println(Constants.LOGIN_IS_BUSY);
+            } else {
+                return login;
             }
         }
     }
 
     @Override
     public String inputPassword() {
+        System.out.println(Constants.CREATING_USER_PASSWORD);
         String password;
         while (true) {
             password = Menu.in.nextLine();
@@ -210,12 +137,40 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUser() {
-        return user;
+    public User getCurrentUser() {
+        return currentUser;
     }
 
     @Override
     public HashGenerator getHashGenerator() {
         return hashGenerator;
+    }
+
+    private String inputUserData(String menu, String firstUserData,
+                                 String secondUserData, String thirdUserData) {
+        int userData;
+        while (true) {
+            System.out.println(menu);
+            try {
+                userData = Integer.parseInt(Menu.in.nextLine());
+                switch (userData) {
+                    case 0 -> {
+                        return "0";
+                    }
+                    case 1 -> {
+                        return firstUserData;
+                    }
+                    case 2 -> {
+                        return secondUserData;
+                    }
+                    case 3 -> {
+                        return thirdUserData;
+                    }
+                    default -> throw new NumberFormatException();
+                }
+            } catch (NumberFormatException e) {
+                System.out.println(Constants.INVALID_INPUT);
+            }
+        }
     }
 }

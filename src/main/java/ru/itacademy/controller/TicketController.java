@@ -1,104 +1,42 @@
 package ru.itacademy.controller;
 
 import ru.itacademy.service.Service;
-import ru.itacademy.service.TicketService;
-import ru.itacademy.service.TicketServiceImpl;
 import ru.itacademy.util.Constants;
+import ru.itacademy.util.TernaryConsumer;
 
 import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.util.function.Predicate;
 
 public class TicketController {
 
-    TicketService ticketService = new TicketServiceImpl();
-
-    public void createTicketsForSession(Timestamp startTime) {
-        ticketService.createTicketsForSession(startTime);
-    }
-
-    public void printTicketMenuWithSessionID() {
+    public void printTickets(String menu, Predicate<Integer> check, String column, String invalidMessage) {
         while (true) {
             try {
-                System.out.println(Constants.MENU_SESSION);
-                int sessionID = Integer.parseInt(Menu.in.nextLine());
-                if (sessionID == 0) {
+                System.out.println(menu);
+                int id = Integer.parseInt(Menu.in.nextLine());
+                if (id == 0) {
                     return;
                 }
-                if (Service.sessionService.checkSessionIDCorrectness(sessionID)) {
-                    ticketService.printTicketsWithSessionID(sessionID);
+                if (check.test(id)) {
+                    Service.ticketService.printTickets(id, column);
                     return;
                 } else {
                     throw new NumberFormatException();
                 }
             } catch (NumberFormatException e) {
-                System.out.println(Constants.INVALID_SESSION_ID);
+                System.out.println(invalidMessage);
             } catch (SQLException e) {
                 System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-            }
-        }
-    }
-
-    public void printTicketMenuWithMovieID() {
-        System.out.println(Constants.MENU_MOVIE);
-        while (true) {
-            try {
-                int movieID = Integer.parseInt(Menu.in.nextLine());
-                if (movieID == 0) {
-                    return;
-                }
-                if (Service.movieService.checkMovieAvailability(movieID)) {
-                    Service.ticketService.printTicketsWithMovieID(movieID);
-                    return;
-                } else {
-                    throw new NumberFormatException();
-                }
-            } catch (NumberFormatException e) {
-                System.out.println(Constants.INVALID_MOVIE_ID);
-            }
-        }
-    }
-
-    public void buyTicket(int userID) {
-        while (true) {
-            System.out.println(Constants.MENU_TICKET_BUY);
-            try {
-                int ticketID = Integer.parseInt(Menu.in.nextLine());
-                if (ticketID == 0) {
-                    return;
-                }
-                if (ticketService.checkTicketAvailability(ticketID)) {
-                    ticketService.buyTicket(ticketID, userID);
-                    return;
-                } else {
-                    throw new NumberFormatException();
-                }
-            } catch (NumberFormatException e) {
-                System.out.println(Constants.INVALID_TICKET_ID);
+                return;
             }
         }
     }
 
     public void printUserTickets(int userID) {
-        ticketService.printUserTickets(userID);
-    }
-
-    public void returnTicket(int userID) {
-        while (true) {
-            System.out.println(Constants.MENU_TICKET_RETURN);
-            try {
-                int ticketID = Integer.parseInt(Menu.in.nextLine());
-                if (ticketID == 0) {
-                    return;
-                }
-                if (ticketService.checkTicketAvailability(ticketID)) {
-                    ticketService.returnTicket(ticketID, userID);
-                    return;
-                } else {
-                    throw new NumberFormatException();
-                }
-            } catch (NumberFormatException e) {
-                System.out.println(Constants.INVALID_TICKET_ID);
-            }
+        try {
+            Service.ticketService.printTickets(userID, "userID");
+        } catch (SQLException e) {
+            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
         }
     }
 
@@ -111,8 +49,10 @@ public class TicketController {
                     return;
                 }
                 if (Service.userService.checkUserAvailability(userID)) {
-                    if (ticketService.printUserTickets(userID)) {
-                        returnTicket(userID);
+                    if (Service.ticketService.printTickets(userID, "userID")) {
+                        updateTicket(userID, Constants.MENU_TICKET_RETURN,
+                                Service.ticketService::updateTicket, false
+                        );
                     }
                     return;
                 } else {
@@ -120,6 +60,30 @@ public class TicketController {
                 }
             } catch (NumberFormatException e) {
                 System.out.println(Constants.INVALID_USER_ID);
+            } catch (SQLException e) {
+                System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+                return;
+            }
+        }
+    }
+
+    public void updateTicket(int userID, String message,
+                             TernaryConsumer<Integer, Integer, Boolean> task, boolean isBuyTicket) {
+        while (true) {
+            System.out.println(message);
+            try {
+                int ticketID = Integer.parseInt(Menu.in.nextLine());
+                if (ticketID == 0) {
+                    return;
+                }
+                if (Service.ticketService.checkTicketAvailability(ticketID)) {
+                    task.accept(ticketID, userID, isBuyTicket);
+                    return;
+                } else {
+                    throw new NumberFormatException();
+                }
+            } catch (NumberFormatException e) {
+                System.out.println(Constants.INVALID_TICKET_ID);
             } catch (SQLException e) {
                 System.out.println(Constants.FAILED_CONNECTION_DATABASE);
                 return;

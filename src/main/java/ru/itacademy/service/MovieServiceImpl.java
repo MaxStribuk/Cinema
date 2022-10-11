@@ -2,6 +2,7 @@ package ru.itacademy.service;
 
 import ru.itacademy.controller.Menu;
 import ru.itacademy.repository.MovieRepository;
+import ru.itacademy.util.ConnectionManager;
 import ru.itacademy.util.Constants;
 
 import java.sql.SQLException;
@@ -14,16 +15,6 @@ public class MovieServiceImpl implements MovieService {
     private final MovieRepository movieRepository = new MovieRepository();
 
     @Override
-    public boolean printAllMovies() {
-        return movieRepository.printMovies();
-    }
-
-    @Override
-    public boolean createMovie(String title, LocalTime duration) throws SQLException {
-        return movieRepository.createMovie(title, Time.valueOf(duration));
-    }
-
-    @Override
     public String inputTitle() {
         String title;
         System.out.println(Constants.CREATING_MOVIE_TITLE);
@@ -32,19 +23,12 @@ public class MovieServiceImpl implements MovieService {
             if (title.equals("0")) {
                 return "0";
             }
-            if (title.length() > 0
-                    && title.length() <= 100
-                    && checkCorrectTitle(title)) {
+            if (checkCorrectTitle(title)) {
                 return title;
             } else {
                 System.out.println(Constants.INVALID_MOVIE_TITLE);
             }
         }
-    }
-
-    private boolean checkCorrectTitle(String title) {
-        return title.matches("[a-zA-Z0-9 !?,-]{1,100}")
-                && !title.matches("[ !?,-]{" + title.length() + "}");
     }
 
     @Override
@@ -68,16 +52,6 @@ public class MovieServiceImpl implements MovieService {
     }
 
     @Override
-    public boolean checkMovieAvailability(int id) {
-        return movieRepository.checkAvailabilityMovie(id);
-    }
-
-    @Override
-    public Time getDuration(int movieID) throws SQLException {
-        return movieRepository.getDuration(movieID);
-    }
-
-    @Override
     public void updateTitle(int movieID) throws SQLException {
         String title = inputTitle();
         if (title.equals("0")) {
@@ -93,7 +67,7 @@ public class MovieServiceImpl implements MovieService {
     public void updateDuration(int movieID) throws SQLException {
         Time duration = Time.valueOf(inputDuration());
         String title = movieRepository.getTitle(movieID);
-        if (movieRepository.checkAvailabilityMovie(title, duration)
+        if (movieRepository.checkAvailabilityMovie(ConnectionManager.open(), title, duration)
                 && Service.sessionService.updateSessions(movieID, duration)) {
             movieRepository.updateMovie(movieID, title, duration);
             System.out.println(Constants.SUCCESSFUL_CREATE_MOVIE);
@@ -104,8 +78,40 @@ public class MovieServiceImpl implements MovieService {
     }
 
     @Override
+    public boolean printMovies() throws SQLException{
+        return movieRepository.printMovies();
+    }
+
+    @Override
+    public boolean createMovie(String title, LocalTime duration) throws SQLException {
+        return movieRepository.createMovie(title, Time.valueOf(duration));
+    }
+
+    @Override
+    public boolean checkMovieAvailability(int id) {
+        try {
+            return movieRepository.checkAvailabilityMovie(id);
+        } catch (SQLException e) {
+            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+            return false;
+        }
+    }
+
+    @Override
     public void removeMovie(int movieID) throws SQLException {
         movieRepository.removeMovie(movieID);
+    }
+
+    @Override
+    public Time getDuration(int movieID) throws SQLException {
+        return movieRepository.getDuration(movieID);
+    }
+
+    private boolean checkCorrectTitle(String title) {
+        return title.matches("[a-zA-Z0-9 !?,-]{1,100}")
+                && !title.matches("[ !?,-]{" + title.length() + "}")
+                && title.length() > 0
+                && title.length() <= 100;
     }
 
     private boolean checkCorrectDuration(int hours, int minutes) {

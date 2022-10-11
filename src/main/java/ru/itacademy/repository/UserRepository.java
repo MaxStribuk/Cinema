@@ -2,7 +2,6 @@ package ru.itacademy.repository;
 
 import ru.itacademy.model.User;
 import ru.itacademy.util.ConnectionManager;
-import ru.itacademy.util.Constants;
 import ru.itacademy.util.Exceptions.InvalidUserException;
 
 import java.sql.Connection;
@@ -12,16 +11,7 @@ import java.sql.SQLException;
 
 public class UserRepository {
 
-    public boolean checkAvailabilityLogin(String login) throws SQLException {
-        try (Connection connection = ConnectionManager.open()) {
-            PreparedStatement stmt = connection.prepareStatement(
-                    "SELECT * FROM user WHERE login = ?");
-            stmt.setString(1, login);
-            return !stmt.executeQuery().first();
-        }
-    }
-
-    public boolean createUser(String login, String password) {
+    public boolean createUser(String login, String password) throws SQLException {
         try (Connection connection = ConnectionManager.open()) {
             PreparedStatement stmt = connection.prepareStatement(
                     "INSERT INTO user (login, password) VALUES (?, ?)");
@@ -29,9 +19,6 @@ public class UserRepository {
             stmt.setString(2, password);
             stmt.execute();
             return true;
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-            return false;
         }
     }
 
@@ -54,20 +41,7 @@ public class UserRepository {
         }
     }
 
-    public boolean deleteUserAccount(User user) {
-        try (Connection connection = ConnectionManager.open()) {
-            PreparedStatement stmt = connection.prepareStatement(
-                    "UPDATE user SET status = \"deleted\" WHERE user_id = ?");
-            stmt.setInt(1, user.getID());
-            stmt.execute();
-            return true;
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-            return false;
-        }
-    }
-
-    public void printUsers() {
+    public void printUsers() throws SQLException {
         try (Connection connection = ConnectionManager.open()) {
             PreparedStatement stmt = connection.prepareStatement(
                     "SELECT * FROM user");
@@ -81,8 +55,25 @@ public class UserRepository {
                         users.getString("status")
                 ));
             }
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+        }
+    }
+
+    public boolean removeUser(User user) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "UPDATE user SET status = 'deleted' WHERE user_id = ?");
+            stmt.setInt(1, user.getID());
+            stmt.execute();
+            return true;
+        }
+    }
+
+    public boolean checkAvailabilityUser(String login) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "SELECT * FROM user WHERE login = ?");
+            stmt.setString(1, login);
+            return !stmt.executeQuery().first();
         }
     }
 

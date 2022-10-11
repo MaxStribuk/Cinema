@@ -1,6 +1,5 @@
 package ru.itacademy.repository;
 
-import ru.itacademy.model.Session;
 import ru.itacademy.model.Ticket;
 import ru.itacademy.util.ConnectionManager;
 import ru.itacademy.util.Constants;
@@ -14,7 +13,7 @@ import java.util.List;
 
 public class TicketRepository {
 
-    public void createTicketsForSession(List<Ticket> tickets) {
+    public void createTickets(List<Ticket> tickets) throws SQLException {
         try (Connection connection = ConnectionManager.open()) {
             PreparedStatement stmt = connection.prepareStatement(
                     "INSERT INTO ticket (row, place, cost, session_id) VALUES (?, ?, ?, ?)");
@@ -26,30 +25,107 @@ public class TicketRepository {
                 stmt.addBatch();
             }
             stmt.executeBatch();
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
         }
     }
 
-    public void printTicketsWithSessionID(int sessionID) {
+    public boolean printTickets(int id, String column) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = getPreparedStatement(connection, column, id);
+            return printTickets(stmt.executeQuery(),
+                    column.equals("userID")
+                            ? Constants.MISSING_USER_TICKETS
+                            : Constants.MISSING_TICKETS);
+        }
+    }
+
+    private PreparedStatement getPreparedStatement(Connection connection, String column, int id)
+            throws SQLException {
+        PreparedStatement stmt =
+                switch (column) {
+                    case "movieID" -> connection.prepareStatement(
+                            "SELECT ticket.ticket_id, ticket.row, ticket.place, ticket.cost, " +
+                                    "session.start_time, session.end_time, movie.title " +
+                                    "FROM ticket, session, movie " +
+                                    "WHERE ticket.session_id = session.session_id " +
+                                    "AND session.movie_id = movie.movie_id " +
+                                    "AND movie.movie_id = ? " +
+                                    "AND ticket.user_id IS NULL");
+                    case "sessionID" -> connection.prepareStatement(
+                            "SELECT ticket.ticket_id, ticket.row, ticket.place, ticket.cost, " +
+                                    "session.start_time, session.end_time, movie.title " +
+                                    "FROM ticket, session, movie " +
+                                    "WHERE ticket.session_id = session.session_id " +
+                                    "AND session.movie_id = movie.movie_id " +
+                                    "AND ticket.session_id = ? " +
+                                    "AND ticket.user_id IS NULL");
+                    default -> connection.prepareStatement(
+                            "SELECT ticket.ticket_id, ticket.row, ticket.place, ticket.cost, " +
+                                    "session.start_time, session.end_time, movie.title " +
+                                    "FROM ticket, session, movie " +
+                                    "WHERE ticket.session_id = session.session_id " +
+                                    "AND session.movie_id = movie.movie_id " +
+                                    "AND ticket.user_id = ?");
+                };
+        stmt.setInt(1, id);
+        return stmt;
+    }
+
+    public boolean checkAvailabilityTicket(int ticketID) throws SQLException {
         try (Connection connection = ConnectionManager.open()) {
             PreparedStatement stmt = connection.prepareStatement(
-                    "SELECT ticket.ticket_id, ticket.row, ticket.place, ticket.cost, " +
-                            "session.start_time, session.end_time, movie.title " +
-                            "FROM ticket, session, movie " +
-                            "WHERE ticket.session_id = session.session_id " +
-                            "AND session.movie_id = movie.movie_id " +
-                            "AND ticket.session_id = ? " +
-                            "AND ticket.user_id IS NULL");
-            stmt.setInt(1, sessionID);
-            ResultSet tickets = stmt.executeQuery();
-            printTickets(tickets, Constants.MISSING_TICKETS);
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+                    "SELECT * FROM ticket WHERE ticket_id = ?");
+            stmt.setInt(1, ticketID);
+            return stmt.executeQuery().first();
         }
     }
 
-    private static boolean printTickets(ResultSet tickets, String message) throws SQLException {
+    public void updateTicket(int ticketID, int userID, boolean isBuyTicket,
+                             String successfulMessage, String failedMessage) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    isBuyTicket
+                            ? "UPDATE ticket SET user_id = ? " +
+                            "WHERE ticket_id = ? " +
+                            "AND user_id IS NULL"
+                            : "UPDATE ticket SET user_id = NULL " +
+                            "WHERE user_id = ? " +
+                            "AND ticket_id = ?"
+            );
+            stmt.setInt(1, userID);
+            stmt.setInt(2, ticketID);
+            if (!checkingSessionStart(connection, ticketID)
+                    && !stmt.execute()
+                    && stmt.getUpdateCount() == 1) {
+                printMessage(connection, ticketID, successfulMessage);
+            } else {
+                System.out.println(failedMessage);
+            }
+        }
+    }
+
+    public void removeTickets(int sessionID) throws SQLException {
+        try (Connection connection = ConnectionManager.open()) {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "DELETE FROM ticket " +
+                            "WHERE session_id = ?");
+            stmt.setInt(1, sessionID);
+            stmt.execute();
+        }
+    }
+
+    private void printMessage(Connection connection,
+                              int ticketID, String message) throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement(
+                "SELECT cost FROM ticket WHERE ticket_id = ?");
+        stmt.setInt(1, ticketID);
+        ResultSet ticket = stmt.executeQuery();
+        ticket.first();
+        System.out.println(message +
+                ticket.getInt("cost") +
+                Constants.CURRENCY);
+    }
+
+    private boolean printTickets(ResultSet tickets, String message) throws SQLException {
         if (!tickets.first()) {
             System.out.println(message);
             return false;
@@ -70,106 +146,6 @@ public class TicketRepository {
         }
     }
 
-    public void printTicketsWithMovieID(int movieID) {
-        try (Connection connection = ConnectionManager.open()) {
-            PreparedStatement stmt = connection.prepareStatement(
-                    "SELECT ticket.ticket_id, ticket.row, ticket.place, ticket.cost, " +
-                            "session.start_time, session.end_time, movie.title " +
-                            "FROM ticket, session, movie " +
-                            "WHERE ticket.session_id = session.session_id " +
-                            "AND session.movie_id = movie.movie_id " +
-                            "AND movie.movie_id = ? " +
-                            "AND ticket.user_id IS NULL");
-            stmt.setInt(1, movieID);
-            ResultSet tickets = stmt.executeQuery();
-            printTickets(tickets, Constants.MISSING_TICKETS);
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-        }
-    }
-
-    public boolean checkAvailabilityTicket(int ticketID) {
-        try (Connection connection = ConnectionManager.open()) {
-            PreparedStatement stmt = connection.prepareStatement(
-                    "SELECT * FROM ticket WHERE ticket_id = ?");
-            stmt.setInt(1, ticketID);
-            return stmt.executeQuery().first();
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-            return false;
-        }
-    }
-
-    public boolean printUserTickets(int userID) {
-        try (Connection connection = ConnectionManager.open()) {
-            PreparedStatement stmt = connection.prepareStatement(
-                    "SELECT ticket.ticket_id, ticket.row, ticket.place, ticket.cost, " +
-                            "session.start_time, session.end_time, movie.title " +
-                            "FROM ticket, session, movie " +
-                            "WHERE ticket.session_id = session.session_id " +
-                            "AND session.movie_id = movie.movie_id " +
-                            "AND ticket.user_id = ?");
-            stmt.setInt(1, userID);
-            ResultSet tickets = stmt.executeQuery();
-            return printTickets(tickets, Constants.MISSING_USER_TICKETS);
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-            return false;
-        }
-    }
-
-    public void buyTicket(int ticketID, int userID) {
-        try (Connection connection = ConnectionManager.open()) {
-            PreparedStatement stmt = connection.prepareStatement(
-                    "UPDATE ticket SET user_id = ? " +
-                            "WHERE ticket_id = ? " +
-                            "AND user_id IS NULL");
-            stmt.setInt(1, userID);
-            stmt.setInt(2, ticketID);
-            if (!stmt.execute() && stmt.getUpdateCount() == 1) {
-                printMessage(connection, ticketID, Constants.SUCCESSFUL_BUY_TICKET);
-            } else {
-                System.out.println(Constants.FAILED_BUY_TICKET);
-            }
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-        }
-    }
-
-    private void printMessage(Connection connection,
-                              int ticketID, String message) throws SQLException {
-        PreparedStatement stmt = connection.prepareStatement(
-                "SELECT cost FROM ticket WHERE ticket_id = ?");
-        stmt.setInt(1, ticketID);
-        ResultSet ticket = stmt.executeQuery();
-        ticket.first();
-        System.out.println(message +
-                ticket.getInt("cost") +
-                Constants.CURRENCY);
-    }
-
-    public void returnTicket(int ticketID, int userID) {
-        try (Connection connection = ConnectionManager.open()) {
-            if (!checkingSessionStart(connection, ticketID)) {
-                PreparedStatement stmt = connection.prepareStatement(
-                        "UPDATE ticket SET user_id = NULL " +
-                                "WHERE user_id = ? " +
-                                "AND ticket_id = ?");
-                stmt.setInt(1, userID);
-                stmt.setInt(2, ticketID);
-                if (!stmt.execute() && stmt.getUpdateCount() == 1) {
-                    printMessage(connection, ticketID, Constants.SUCCESSFUL_RETURN_TICKET);
-                } else {
-                    System.out.println(Constants.FAILED_RETURN_TICKET);
-                }
-            } else {
-                System.out.println(Constants.FAILED_RETURN_TICKET);
-            }
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-        }
-    }
-
     private boolean checkingSessionStart(Connection connection, int ticketID) throws SQLException {
         PreparedStatement stmt = connection.prepareStatement(
                 "SELECT session.start_time " +
@@ -182,28 +158,5 @@ public class TicketRepository {
         return tickets.getTimestamp("start_time")
                 .toLocalDateTime()
                 .isBefore(LocalDateTime.now());
-    }
-
-    public void removeTicketsForSession(int sessionID) throws SQLException {
-        try (Connection connection = ConnectionManager.open()) {
-            PreparedStatement stmt = connection.prepareStatement(
-                    "DELETE FROM ticket " +
-                            "WHERE session_id = ?");
-            stmt.setInt(1, sessionID);
-            stmt.execute();
-        }
-    }
-
-    public void removeTicketsForSessions(List<Session> sessions) throws SQLException {
-        try (Connection connection = ConnectionManager.open()) {
-            PreparedStatement stmt = connection.prepareStatement(
-                    "DELETE FROM ticket " +
-                            "WHERE session_id = ?");
-            for (Session session : sessions) {
-                stmt.setInt(1, session.getID());
-                stmt.addBatch();
-            }
-            stmt.executeBatch();
-        }
     }
 }

@@ -1,6 +1,5 @@
 package ru.itacademy.service;
 
-import ru.itacademy.model.Session;
 import ru.itacademy.model.Ticket;
 import ru.itacademy.repository.TicketRepository;
 import ru.itacademy.util.Constants;
@@ -15,30 +14,17 @@ public class TicketServiceImpl implements TicketService {
     TicketRepository ticketRepository = new TicketRepository();
 
     @Override
-    public void createTicketsForSession(Timestamp startTime) {
-        int sessionID;
-        try {
-            sessionID = Service.sessionService.getSessionID(startTime);
-        } catch (SQLException e) {
-            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
-            return;
-        }
-        List<Ticket> tickets = createTicketsForSession(sessionID);
-        ticketRepository.createTicketsForSession(tickets);
+    public void createTickets(Timestamp startTime) throws SQLException {
+        int sessionID = Service.sessionService.getSession(startTime).getID();
+        List<Ticket> tickets = new ArrayList<>(createTickets(sessionID, 1,
+                Constants.CHEAP_ROWS, Constants.COST_CHEAP_TICKET));
+        tickets.addAll(createTickets(sessionID, Constants.CHEAP_ROWS + 1,
+                Constants.MAX_ROW, Constants.COST_EXPENSIVE_TICKET));
+        ticketRepository.createTickets(tickets);
     }
 
     @Override
-    public void printTicketsWithSessionID(int sessionID) {
-        ticketRepository.printTicketsWithSessionID(sessionID);
-    }
-
-    @Override
-    public void printTicketsWithMovieID(int movieID) {
-        ticketRepository.printTicketsWithMovieID(movieID);
-    }
-
-    @Override
-    public boolean checkTicketAvailability(int ticketID) {
+    public boolean checkTicketAvailability(int ticketID) throws SQLException {
         if (ticketID < 0) {
             return false;
         } else {
@@ -47,54 +33,42 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public void buyTicket(int ticketID, int userID) {
-        ticketRepository.buyTicket(ticketID, userID);
-    }
-
-    @Override
-    public boolean printUserTickets(int userID) {
-        return ticketRepository.printUserTickets(userID);
-    }
-
-    @Override
-    public void returnTicket(int ticketID, int userID) {
-        ticketRepository.returnTicket(ticketID, userID);
-    }
-
-    @Override
-    public void removeTicketsForSession(int sessionID) throws SQLException {
-        ticketRepository.removeTicketsForSession(sessionID);
-    }
-
-    @Override
-    public void removeTicketsForSessions(List<Session> sessions) throws SQLException {
-        ticketRepository.removeTicketsForSessions(sessions);
-    }
-
-    private ArrayList<Ticket> createTicketsForSession(int sessionID) {
-        ArrayList<Ticket> tickets = new ArrayList<>();
-        tickets.addAll(createCheapTickets(sessionID));
-        tickets.addAll(createExpensiveTickets(sessionID));
-        return tickets;
-    }
-
-    private ArrayList<Ticket> createExpensiveTickets(int sessionID) {
-        ArrayList<Ticket> tickets = new ArrayList<>();
-        for (int i = Constants.CHEAP_ROWS + 1; i <= Constants.MAX_ROW; i++) {
-            for (int j = 1; j <= Constants.MAX_PLACE_IN_ROW; j++) {
-                tickets.add(new Ticket(
-                        i, j, Constants.COST_EXPENSIVE_TICKET, sessionID));
-            }
+    public boolean printTickets(int id, String column) throws SQLException {
+        if (column.equals("userID")
+                || column.equals("movieID")
+                || column.equals("sessionID")) {
+            return ticketRepository.printTickets(id, column);
+        } else {
+            throw new SQLException();
         }
-        return tickets;
     }
 
-    private ArrayList<Ticket> createCheapTickets(int sessionID) {
+    @Override
+    public void updateTicket(int ticketID, int userID, boolean isBuyTicket) {
+        try {
+            if (isBuyTicket) {
+                ticketRepository.updateTicket(ticketID, userID, true,
+                        Constants.SUCCESSFUL_BUY_TICKET, Constants.FAILED_BUY_TICKET);
+            } else {
+                ticketRepository.updateTicket(ticketID, userID, false,
+                        Constants.SUCCESSFUL_RETURN_TICKET, Constants.FAILED_RETURN_TICKET);
+            }
+        } catch (SQLException e) {
+            System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+        }
+    }
+
+    @Override
+    public void removeTickets(int sessionID) throws SQLException {
+        ticketRepository.removeTickets(sessionID);
+    }
+
+    private ArrayList<Ticket> createTickets(int sessionID, int firstRow,
+                                            int lastRow, int costTicket) {
         ArrayList<Ticket> tickets = new ArrayList<>();
-        for (int i = 1; i <= Constants.CHEAP_ROWS; i++) {
+        for (int i = firstRow; i <= lastRow; i++) {
             for (int j = 1; j <= Constants.MAX_PLACE_IN_ROW; j++) {
-                tickets.add(new Ticket(
-                        i, j, Constants.COST_CHEAP_TICKET, sessionID));
+                tickets.add(new Ticket(i, j, costTicket, sessionID));
             }
         }
         return tickets;

@@ -21,27 +21,19 @@ public class SessionServiceImpl implements SessionService {
     private final SessionRepository sessionRepository = new SessionRepository();
 
     @Override
-    public boolean printFutureSessions() {
-        return sessionRepository.printFutureSessions();
-    }
-
-    @Override
     public int inputMovieID() {
         int id;
         System.out.println(Constants.CREATING_MOVIE_ID);
         while (true) {
             try {
                 id = Integer.parseInt(Menu.in.nextLine());
-                if (id < 0) {
-                    throw new NumberFormatException();
-                }
                 if (id == 0) {
                     return 0;
                 }
-                if (checkMovieIDAvailability(id)) {
+                if (id > 0 && Service.movieService.checkMovieAvailability(id)) {
                     return id;
                 } else {
-                    System.out.println(Constants.INVALID_MOVIE_ID);
+                    throw new NumberFormatException();
                 }
             } catch (NumberFormatException e) {
                 System.out.println(Constants.INVALID_MOVIE_ID);
@@ -69,12 +61,30 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    public boolean createSession(int movieID, Timestamp startTime) {
+    public boolean createSession(int movieID, Timestamp startTime) throws SQLException {
         Time duration;
+        duration = Service.movieService.getDuration(movieID);
+        Timestamp endTime = calculateEndTime(startTime, duration);
+        return sessionRepository.createSession(movieID, startTime, endTime);
+    }
+
+    @Override
+    public boolean checkSessionIDCorrectness(int sessionID){
+        if (sessionID < 0) {
+            return false;
+        } else {
+            try {
+                return sessionRepository.checkAvailabilitySession(sessionID);
+            } catch (SQLException e) {
+                System.out.println(Constants.FAILED_CONNECTION_DATABASE);
+                return false;
+            }
+        }
+    }
+
+    public boolean printSessions(boolean isAllSessions) {
         try {
-            duration = Service.movieService.getDuration(movieID);
-            Timestamp endTime = calculateEndTime(startTime, duration);
-            return sessionRepository.createSession(movieID, startTime, endTime);
+            return sessionRepository.printSessions(isAllSessions);
         } catch (SQLException e) {
             System.out.println(Constants.FAILED_CONNECTION_DATABASE);
             return false;
@@ -82,55 +92,20 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    public int getSessionID(Timestamp startTime) throws SQLException {
-        return sessionRepository.getSessionID(startTime);
-    }
-
-    @Override
-    public boolean checkSessionIDCorrectness(int sessionID) throws SQLException {
-        if (sessionID < 0) {
-            return false;
-        } else {
-            return sessionRepository.checkAvailabilitySession(sessionID);
-        }
-    }
-
-    @Override
-    public void updateStartTime(int sessionID) throws SQLException {
-        Timestamp startTime = inputStartTime();
-        int movieID = sessionRepository.getMovieID(sessionID);
-        updateSession(sessionID, startTime, movieID);
-    }
-
-    @Override
-    public void updateMovieID(int sessionID) throws SQLException {
-        Timestamp startTime = sessionRepository.getStartTime(sessionID);
-        int movieID = inputMovieID();
-        updateSession(sessionID, startTime, movieID);
-    }
-
-    @Override
     public boolean updateSessions(int movieID, Time duration) throws SQLException {
-        List <Session> sessions = sessionRepository.getSessions(movieID);
+        List<Session> sessions = sessionRepository.getSessions(movieID);
         for (Session session : sessions) {
-            Timestamp endTime = calculateEndTime(session.getStartTime(), duration);
-            if (endTime.after(session.getEndTime())) {
-                if (sessionRepository.checkAvailabilitySession(ConnectionManager.open(),
-                        session.getID(), session.getStartTime(), endTime)) {
-                    session.setEndTime(endTime);
-                } else {
-                    return false;
-                }
-            } else {
-                session.setEndTime(endTime);
+            session.setEndTime(calculateEndTime(session.getStartTime(), duration));
+            if (!sessionRepository.checkAvailabilitySession(ConnectionManager.open(),
+                    session.getID(), session.getStartTime(), session.getEndTime())) {
+                return false;
             }
         }
-        return sessionRepository.updateSessions(sessions);
-    }
-
-    @Override
-    public void printAllSessions() {
-        sessionRepository.printAllSessions();
+        for (Session session : sessions) {
+            sessionRepository.updateSession(session.getID(), session.getStartTime(),
+                    session.getEndTime(), session.getMovieID());
+        }
+        return true;
     }
 
     @Override
@@ -139,18 +114,13 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    public List<Session> getSessions(int movieID) throws SQLException {
-        return sessionRepository.getSessions(movieID);
+    public Session getSession(Timestamp startTime) throws SQLException {
+        return sessionRepository.getSession(startTime);
     }
 
-    private void updateSession(int sessionID, Timestamp startTime, int movieID) throws SQLException {
-        Time duration = Service.movieService.getDuration(movieID);
-        Timestamp endTime = calculateEndTime(startTime, duration);
-        if (sessionRepository.updateSession(sessionID, startTime, endTime, movieID)) {
-            System.out.println(Constants.SUCCESSFUL_CREATE_SESSION);
-        } else {
-            System.out.println(Constants.SESSIONS_IS_BUSY);
-        }
+    @Override
+    public List<Session> getSessions(int movieID) throws SQLException {
+        return sessionRepository.getSessions(movieID);
     }
 
     private Timestamp calculateEndTime(Timestamp startTime, Time duration) {
@@ -165,7 +135,20 @@ public class SessionServiceImpl implements SessionService {
         return LocalDateTime.now().isBefore(startTime);
     }
 
-    private boolean checkMovieIDAvailability(int id) {
-        return Service.movieService.checkMovieAvailability(id);
+    @Override
+    public void updateSession(int sessionID, boolean isUpdateMovieID) throws SQLException {
+        Timestamp startTime = isUpdateMovieID
+                ? sessionRepository.getSession(sessionID).getStartTime()
+                : inputStartTime();
+        int movieID = isUpdateMovieID
+                ? inputMovieID()
+                : sessionRepository.getSession(sessionID).getMovieID();
+        Time duration = Service.movieService.getDuration(movieID);
+        Timestamp endTime = calculateEndTime(startTime, duration);
+        System.out.println(
+                sessionRepository.updateSession(sessionID, startTime, endTime, movieID)
+                        ? Constants.SUCCESSFUL_CREATE_SESSION
+                        : Constants.SESSIONS_IS_BUSY
+        );
     }
 }

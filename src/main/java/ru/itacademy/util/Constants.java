@@ -10,9 +10,9 @@ public final class Constants {
     public final static int CHEAP_ROWS = 8;
     public final static int COST_CHEAP_TICKET = 10;
     public final static int COST_EXPENSIVE_TICKET = 15;
-    public final static String CURRENCY = " рублей";
     public final static String GREETING = "Добро пожаловать в приложение Мой кинотеатр!!!";
     public final static String FAREWELL = "Спасибо, что воспользовались приложением, до свидания!!!";
+    public final static String CURRENCY = " рублей";
     public final static String FAILED_LOAD_DRIVER = "Не удалось загрузить jdbc драйвер.";
     public final static String FAILED_CONNECTION_DATABASE = "Не удалось установить " +
             "соединение с базой данных.";
@@ -28,7 +28,9 @@ public final class Constants {
             либо билет с данным ID у пользователя отсутствует.
             """;
     public static final String FAILED_BUY_TICKET = "К сожалению, покупка билета не удалась. " +
-            "Данный билет уже был кем-то приобретен.";
+            "Данный билет уже был кем-то приобретен, либо сеанс по билету уже недоступен.";
+    public static final String FAILED_UPDATE_USER = "Внести изменения в данные пользователя " +
+            "не удалось.";
     public final static String SUCCESSFUL_REGISTRATION_USER = "Регистрация прошла успешно.";
     public static final String SUCCESSFUL_CREATE_MOVIE = "Фильм усшешно добавлен в базу данных.";
     public static final String SUCCESSFUL_CREATE_SESSION = "Сеанс усшешно добавлен в базу данных.";
@@ -36,6 +38,10 @@ public final class Constants {
             "С Вашей карточки было списано ";
     public static final String SUCCESSFUL_RETURN_TICKET = "Поздравляем, операция завершена успешно. " +
             "На карточку пользователя было возвращено ";
+    public static final String SUCCESSFUL_UPDATE_USER = "Редактирование данных пользователя " +
+            "успешно завершено.";
+    public static final String SUCCESSFUL_REMOVE_SESSION = "Операция удаления сеанса успешно завершена.";
+    public static final String SUCCESSFUL_REMOVE_MOVIE = "Операция удаоения фильма успешно завершена.";
     public final static String MENU_MAIN = """
             Пожалуйста, введите:
             0 - для выхода из приложения
@@ -174,6 +180,8 @@ public final class Constants {
     public static final String INVALID_SESSION_START_TIME = "Введено некорректное начало сеанса.";
     public static final String INVALID_TICKET_ID = "Введен некорректный ID билета, " +
             "билет с введенным ID не существует.";
+    public static final String INVALID_HASH_ALGORITHM = "Выбранный Вами алгоритм хеширования " +
+            "не поддерживается.";
     public final static String CREATING_USER_LOGIN = "Пожалуйста, задайте логин " +
             "или введите 0 для возврата в предыдуўее меню.";
     public final static String CREATING_USER_PASSWORD = "Пожалуйста, задайте пароль " +
@@ -202,7 +210,8 @@ public final class Constants {
     public static final String MISSING_SESSIONS = "К сожалению, на данный момент " +
             " сеансы в репертуаре кинотеатра отсутствют.";
     public static final String MISSING_TICKETS = "К сожалению, билеты на выбранный Вами сеанс отсутствуют.";
-    public static final String MISSING_USER_TICKETS = "К сожалению, у пользователя отсутствуют приобретенные билеты.";
+    public static final String MISSING_USER_TICKETS = "К сожалению, у пользователя отсутствуют " +
+            "приобретенные билеты.";
     public final static String LOGIN_IS_BUSY = "Данный логин уже занят, попробуйте задать другой " +
             "или введите 0 для возврата в главное меню.";
     public static final String MOVIE_IS_BUSY = "Фильм с введенными Вами данными уже существует.";
@@ -238,13 +247,6 @@ public final class Constants {
             Вы пытаетесь изменить данные своего аккаунта с уровнем доступа администратора.
             Данный функционал при использовании приложения Вам недоступен.
             """;
-    public static final String SUCCESSFUL_UPDATE_USER = "Редактирование данных пользователя " +
-            "успешно завершено.";
-    public static final String FAILED_UPDATE_USER = "Внести изменения в данные пользователя " +
-            "не удалось.";
-    public static final String SUCCESSFUL_REMOVE_SESSION = "Операция удаления сеанса успешно завершена.";
-    public static final String SUCCESSFUL_REMOVE_MOVIE = "Операция удаоения фильма успешно завершена.";
-    public static final String INVALID_HASH_ALGORITHM = "Выбранный Вами алгоритм хеширования не поддерживается.";
 
     private Constants() {
     }
